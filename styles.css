@@ -1,0 +1,48 @@
+#logo {
+    height: 50px;
+}
+
+.jumbotron {
+    background: url('images/hero.jpg') no-repeat center center/cover;
+}
+
+footer {
+    background: #343a40;
+    color: white;
+}
+
+table {
+    margin-top: 20px;
+}
+
+.accordion .card-header {
+    background-color: #007bff;
+    color: white;
+}
+
+.accordion .card-header .btn-link {
+    color: white;
+    text-decoration: none;
+}
+
+.accordion .card-header .btn-link:hover {
+    text-decoration: underline;
+}
+
+.accordion .card-body ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.accordion .card-body ul li {
+    padding: 5px 0;
+}
+
+.accordion .card-body ul li a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+.accordion .card-body ul li a:hover {
+    text-decoration: underline;
+}
