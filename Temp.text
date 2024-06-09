@@ -131,3 +131,85 @@ public ActionResult Index(string custId, int orderId)
         }
     }
 }
+
+
+
+
+
+public ActionResult GetProductsByCategory(int categoryId)
+{
+    using (HttpClient client = new HttpClient())
+    {
+        client.BaseAddress = new Uri("https://localhost:44338/api/");
+        var responseTask = client.GetAsync($"Products/GetByCategory?categoryId={categoryId}");
+        responseTask.Wait();
+        
+        var result = responseTask.Result;
+        if (result.IsSuccessStatusCode)
+        {
+            var readTask = result.Content.ReadAsStringAsync();
+            readTask.Wait();
+            var products = JsonConvert.DeserializeObject<IEnumerable<Product>>(readTask.Result);
+            return Json(products, JsonRequestBehavior.AllowGet);
+        }
+        else
+        {
+            return new HttpStatusCodeResult(HttpStatusCode.InternalServerError, "Server error. Please contact administrator.");
+        }
+    }
+}
+
+
+
+
+@model BillingViewModel
+
+@{
+    ViewBag.Title = "Billing";
+}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#CategoryDropdown').change(function () {
+            var categoryId = $(this).val();
+            $.ajax({
+                url: '@Url.Action("GetProductsByCategory", "YourControllerName")',
+                type: 'GET',
+                data: { categoryId: categoryId },
+                success: function (data) {
+                    var productsDropdown = $('#ProductsDropdown');
+                    productsDropdown.empty();
+                    $.each(data, function (i, product) {
+                        productsDropdown.append($('<option/>', {
+                            value: product.ProductId,
+                            text: product.ProductName
+                        }));
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.log(xhr.responseText);
+                }
+            });
+        });
+    });
+</script>
+
+<div>
+    <h2>Billing</h2>
+    <div>
+        <label>Customer:</label>
+        <span>@Model.customer.CustomerName</span>
+    </div>
+    <div>
+        <label>Product Category:</label>
+        @Html.DropDownList("CategoryDropdown", ViewBag.ProductCategories as SelectList, "Select Category", new { @id = "CategoryDropdown" })
+    </div>
+    <div>
+        <label>Products:</label>
+        <select id="ProductsDropdown">
+            <option value="">Select Product</option>
+        </select>
+    </div>
+</div>
