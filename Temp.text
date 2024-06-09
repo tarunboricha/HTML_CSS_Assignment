@@ -52,3 +52,21 @@
         });
     </script>
 }
+
+
+
+[HttpGet]
+public async Task<ActionResult> GetProductsByCategory(int categoryId)
+{
+    using (var client = new HttpClient())
+    {
+        client.BaseAddress = new Uri("http://yourapiurl.com/");
+        HttpResponseMessage response = await client.GetAsync($"api/products?categoryId={categoryId}");
+        if (response.IsSuccessStatusCode)
+        {
+            var data = await response.Content.ReadAsAsync<List<Product>>();
+            return Json(data, JsonRequestBehavior.AllowGet);
+        }
+    }
+    return Json(new List<Product>(), JsonRequestBehavior.AllowGet);
+}
