@@ -70,3 +70,64 @@ public async Task<ActionResult> GetProductsByCategory(int categoryId)
     }
     return Json(new List<Product>(), JsonRequestBehavior.AllowGet);
 }
+
+
+
+
+public class BillingViewModel
+{
+    public CustomerDetail customer {  get; set; }
+    public IEnumerable<ProductCategory> categories { get; set; }
+    public IEnumerable<Product> Products { get; set; }
+    public IEnumerable<SupplierDetail> Suppliers { get; set; }
+    public int selectedCategory { get; set; }
+    public int selectedSupplier { get; set; }
+    public int selectedProduct { get; set; }
+    public int OrderId { get; set; }
+}
+
+
+
+public ActionResult Index(string custId, int orderId)
+{
+    using (HttpClient client = new HttpClient())
+    { 
+        BillingViewModel viewModel = new BillingViewModel();
+        viewModel.OrderId = orderId;
+        client.BaseAddress = new Uri("https://localhost:44338/api/");
+        //HTTP GET
+        var custResponseTask = client.GetAsync($"CustomerDetails/Search?customerContact={custId}");
+        custResponseTask.Wait();
+        // retrieve the result
+        var custResult = custResponseTask.Result;
+        // check the status code for success
+        if (custResult.IsSuccessStatusCode)
+        {
+            // read the result
+            var readTask = custResult.Content.ReadAsStringAsync();
+            readTask.Wait();
+            // fill the list variable created above with the returned result
+            viewModel.customer = JsonConvert.DeserializeObject<CustomerDetail>(readTask.Result);
+
+            var prodCatResponseTask = client.GetAsync("ProductCategory");
+            prodCatResponseTask.Wait();
+            // retrieve the result
+            var prodCatResult = prodCatResponseTask.Result;
+            // check the status code for success
+            if (prodCatResult.IsSuccessStatusCode)
+            {
+                readTask = prodCatResult.Content.ReadAsStringAsync();
+                readTask.Wait();
+                // fill the list variable created above with the returned result
+                viewModel.categories = JsonConvert.DeserializeObject<IEnumerable<ProductCategory>>(readTask.Result);
+                ViewBag.ProductCategories = new SelectList(viewModel.categories, "CategoryId", "CategoryName");
+            }
+            return View(viewModel);
+        }
+        else //web api sent error response 
+        {
+            ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+            return View(viewModel);
+        }
+    }
+}
