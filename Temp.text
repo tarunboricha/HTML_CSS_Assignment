@@ -300,3 +300,118 @@ public ActionResult GetProductsByCategory(int categoryId)
         </table>
     </div>
 </div>
+
+
+
+
+
+@model BillingViewModel
+
+@{
+    ViewBag.Title = "Billing";
+}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        // Handle category change to fetch products
+        $('#CategoryDropdown').change(function () {
+            var categoryId = $(this).val();
+            $.ajax({
+                url: '@Url.Action("GetProductsByCategory", "YourControllerName")',
+                type: 'GET',
+                data: { categoryId: categoryId },
+                success: function (data) {
+                    var productsDropdown = $('#ProductsDropdown');
+                    productsDropdown.empty();
+                    productsDropdown.append($('<option/>', {
+                        value: '',
+                        text: 'Select Product'
+                    }));
+                    $.each(data, function (i, product) {
+                        productsDropdown.append($('<option/>', {
+                            value: product.ProductId,
+                            text: product.ProductName
+                        }));
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.log(xhr.responseText);
+                }
+            });
+        });
+
+        // Handle add button click to add items to the table
+        $('#addButton').click(function () {
+            var selectedCategoryId = $('#CategoryDropdown').val();
+            var selectedCategoryText = $('#CategoryDropdown option:selected').text();
+            var selectedProductId = $('#ProductsDropdown').val();
+            var selectedProductText = $('#ProductsDropdown option:selected').text();
+            var selectedSupplierId = $('#SupplierDropdown').val();
+            var selectedSupplierText = $('#SupplierDropdown option:selected').text();
+
+            if (selectedProductId && selectedSupplierId) {
+                var newRow = '<tr><td>' + selectedCategoryText + '</td><td>' + selectedProductText + '</td><td>' + selectedSupplierText + '</td></tr>';
+                $('#itemsTable tbody').append(newRow);
+
+                // Update the hidden fields or any model binding inputs if necessary
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'selectedCategory',
+                    value: selectedCategoryId
+                }).appendTo('form');
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'selectedProduct',
+                    value: selectedProductId
+                }).appendTo('form');
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'selectedSupplier',
+                    value: selectedSupplierId
+                }).appendTo('form');
+            } else {
+                alert("Please select a product and supplier.");
+            }
+        });
+    });
+</script>
+
+<div>
+    <h2>Billing</h2>
+    <div>
+        <label>Customer:</label>
+        <span>@Model.customer.CustomerName</span>
+    </div>
+    <div>
+        <label>Product Category:</label>
+        @Html.DropDownList("CategoryDropdown", ViewBag.ProductCategories as SelectList, "Select Category", new { @id = "CategoryDropdown" })
+    </div>
+    <div>
+        <label>Products:</label>
+        <select id="ProductsDropdown">
+            <option value="">Select Product</option>
+        </select>
+    </div>
+    <div>
+        <label>Supplier:</label>
+        @Html.DropDownList("SupplierDropdown", new SelectList(Model.Suppliers, "SupplierId", "SupplierName"), "Select Supplier", new { @id = "SupplierDropdown" })
+    </div>
+    <button id="addButton">Add</button>
+    <div>
+        <h3>Items</h3>
+        <table id="itemsTable">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Product</th>
+                    <th>Supplier</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- New rows will be added here -->
+            </tbody>
+        </table>
+    </div>
+</div>
