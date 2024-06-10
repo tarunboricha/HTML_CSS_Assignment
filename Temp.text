@@ -549,3 +549,75 @@ public ActionResult GetProductsByCategory(int categoryId)
         </form>
     </div>
 </div>
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Check Name in Table</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            function checkNameInTable(name) {
+                let nameExists = false;
+
+                $("#table tbody tr").each(function() {
+                    // Check if the name exists in any cell of the current row
+                    $(this).find('td').each(function() {
+                        if ($(this).text().trim() === name) {
+                            nameExists = true;
+                            return false;  // Exit the loop once the name is found
+                        }
+                    });
+
+                    if (nameExists) {
+                        return false;  // Exit the outer loop once the name is found
+                    }
+                });
+
+                return nameExists;
+            }
+
+            // Example usage
+            let nameToCheck = "John Doe";
+            if (checkNameInTable(nameToCheck)) {
+                alert(nameToCheck + " exists in the table.");
+            } else {
+                alert(nameToCheck + " does not exist in the table.");
+            }
+        });
+    </script>
+</head>
+<body>
+    <table id="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>City</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>John Doe</td>
+                <td>30</td>
+                <td>New York</td>
+            </tr>
+            <tr>
+                <td>Jane Smith</td>
+                <td>25</td>
+                <td>Los Angeles</td>
+            </tr>
+            <tr>
+                <td>Sam Brown</td>
+                <td>40</td>
+                <td>Chicago</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
