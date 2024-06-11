@@ -73,7 +73,55 @@ public partial class SalesItem
     public virtual SupplierDetail SupplierDetail { get; set; }
 }
 
+public partial class SupplierDetail
+{
+    public int SupId { get; set; }
 
+    public string SubName { get; set; } = null!;
+
+    public string SubAddress { get; set; } = null!;
+
+    public string SubContact { get; set; } = null!;
+
+    public virtual ICollection<ProcurementDetail> ProcurementDetails { get; set; } = new List<ProcurementDetail>();
+
+    public virtual ICollection<ProductInventory> ProductInventories { get; set; } = new List<ProductInventory>();
+
+    public virtual ICollection<SalesItem> SalesItems { get; set; } = new List<SalesItem>();
+}
+
+
+
+public partial class ProductInventory
+{
+    public int SupId { get; set; }
+
+    public int ProductId { get; set; }
+
+    public int Stocks { get; set; }
+
+    public virtual Product Product { get; set; } = null!;
+
+    public virtual SupplierDetail Sup { get; set; } = null!;
+}
+
+
+public partial class ProcurementDetail
+{
+    public int ProcurementId { get; set; }
+
+    public int? SupId { get; set; }
+
+    public int? ProductId { get; set; }
+
+    public int Qty { get; set; }
+
+    public int TotalPrice { get; set; }
+
+    public virtual Product? Product { get; set; }
+
+    public virtual SupplierDetail? Sup { get; set; }
+}
 
 
 
