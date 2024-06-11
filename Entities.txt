@@ -252,3 +252,24 @@ public class BillingController : Controller
         return View("Index", order);
     }
 }
+
+
+
+
+using System.Collections.Generic;
+
+namespace YourNamespace.ViewModels
+{
+    public class OrderViewModel
+    {
+        public int CustomerId { get; set; }
+        public List<OrderItemViewModel> OrderItems { get; set; }
+    }
+
+    public class OrderItemViewModel
+    {
+        public int ProductId { get; set; }
+        public int Quantity { get; set; }
+        public int Price { get; set; }
+    }
+}
