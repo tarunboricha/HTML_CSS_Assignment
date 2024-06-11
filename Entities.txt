@@ -273,3 +273,6 @@ namespace YourNamespace.ViewModels
         public int Price { get; set; }
     }
 }
+
+
+SELECT SUM(PricePerItem * Qty) FROM SalesItem GROUP BY SalesId HAVING SalesId = 10;
