@@ -1,0 +1,253 @@
+@model YourNamespace.ViewModels.BillingViewModel
+
+@{
+    ViewData["Title"] = "Billing Page";
+}
+
+<h2>Billing Page</h2>
+
+<div>
+    <label for="customerSelect">Select Customer:</label>
+    <select id="customerSelect" asp-for="SelectedCustomerId" asp-items="@(new SelectList(Model.Customers, "CustomerId", "CustomerName"))">
+        <option value="">-- Select Customer --</option>
+    </select>
+</div>
+
+<div>
+    <label for="categorySelect">Select Category:</label>
+    <select id="categorySelect">
+        <option value="">-- Select Category --</option>
+        @foreach (var category in Model.Categories)
+        {
+            <option value="@category.CategoryId">@category.CategoryName</option>
+        }
+    </select>
+</div>
+
+<div>
+    <label for="productSelect">Select Product:</label>
+    <select id="productSelect">
+        <option value="">-- Select Product --</option>
+    </select>
+</div>
+
+<div>
+    <label for="price">Price:</label>
+    <input type="text" id="price" readonly />
+</div>
+
+<div>
+    <label for="qty">Quantity:</label>
+    <input type="number" id="qty" value="1" />
+</div>
+
+<button type="button" id="addProduct">Add Product</button>
+
+<table id="selectedProductsTable">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<button type="button" id="checkout">Checkout</button>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#categorySelect').change(function () {
+                var categoryId = $(this).val();
+                if (categoryId) {
+                    $.getJSON('/Billing/GetProductsByCategory/' + categoryId, function (data) {
+                        var productSelect = $('#productSelect');
+                        productSelect.empty();
+                        productSelect.append('<option value="">-- Select Product --</option>');
+                        $.each(data, function (index, item) {
+                            productSelect.append('<option value="' + item.productId + '" data-price="' + item.price + '">' + item.productName + '</option>');
+                        });
+                    });
+                }
+            });
+
+            $('#productSelect').change(function () {
+                var selectedOption = $(this).find('option:selected');
+                var price = selectedOption.data('price');
+                $('#price').val(price);
+            });
+
+            $('#addProduct').click(function () {
+                var productSelect = $('#productSelect');
+                var selectedOption = productSelect.find('option:selected');
+                var productName = selectedOption.text();
+                var productId = selectedOption.val();
+                var price = $('#price').val();
+                var qty = $('#qty').val();
+                var total = price * qty;
+
+                if (productId && qty > 0) {
+                    var newRow = '<tr data-product-id="' + productId + '"><td>' + productName + '</td><td>' + price + '</td><td>' + qty + '</td><td>' + total + '</td></tr>';
+                    $('#selectedProductsTable tbody').append(newRow);
+                }
+            });
+
+            $('#checkout').click(function () {
+                var customerId = $('#customerSelect').val();
+                var items = [];
+                $('#selectedProductsTable tbody tr').each(function () {
+                    var row = $(this);
+                    var item = {
+                        CustomerId: customerId,
+                        ProductId: row.data('product-id'),
+                        Qty: row.find('td:nth-child(3)').text(),
+                        PricePerItem: row.find('td:nth-child(2)').text()
+                    };
+                    items.push(item);
+                });
+
+                $.ajax({
+                    url: '/Billing/Checkout',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(items),
+                    success: function (response) {
+                        alert(response);
+                    },
+                    error: function (error) {
+                        alert('Error: ' + error.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+}
+
+
+
+
+
+
+using Microsoft.AspNetCore.Mvc;
+using System.Linq;
+using YourNamespace.Models;
+using YourNamespace.ViewModels;
+
+public class BillingController : Controller
+{
+    private readonly YourDbContext _context;
+
+    public BillingController(YourDbContext context)
+    {
+        _context = context;
+    }
+
+    public IActionResult Index()
+    {
+        var customers = _context.CustomerDetails.ToList();
+        var categories = _context.ProductCategories.ToList();
+        
+        var model = new BillingViewModel
+        {
+            Customers = customers,
+            Categories = categories,
+        };
+
+        return View(model);
+    }
+
+    [HttpGet]
+    public JsonResult GetProductsByCategory(int categoryId)
+    {
+        var products = _context.Products
+            .Where(p => p.CategoryId == categoryId)
+            .Select(p => new { p.ProductId, p.ProductName, p.Price })
+            .ToList();
+
+        return Json(products);
+    }
+
+    [HttpPost]
+    public IActionResult Checkout([FromBody] List<SalesItemViewModel> items)
+    {
+        if (items == null || !items.Any())
+        {
+            return BadRequest("No items to checkout");
+        }
+
+        foreach (var item in items)
+        {
+            var salesItem = new SalesItem
+            {
+                CustomerId = item.CustomerId,
+                ProductId = item.ProductId,
+                Qty = item.Qty,
+                PricePerItem = item.PricePerItem
+            };
+
+            _context.SalesItems.Add(salesItem);
+        }
+
+        _context.SaveChanges();
+        return Ok("Order placed successfully");
+    }
+}
+
+
+
+
+namespace YourNamespace.ViewModels
+{
+    public class BillingViewModel
+    {
+        public List<CustomerDetail> Customers { get; set; }
+        public List<ProductCategory> Categories { get; set; }
+        public int? SelectedCustomerId { get; set; }
+    }
+
+    public class SalesItemViewModel
+    {
+        public int CustomerId { get; set; }
+        public int ProductId { get; set; }
+        public int Qty { get; set; }
+        public int PricePerItem { get; set; }
+    }
+}
+
+
+
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddControllersWithViews();
+    services.AddDbContext<YourDbContext>(options => options.UseSqlServer("YourConnectionString"));
+}
+
+public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+{
+    if (env.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+    }
+    else
+    {
+        app.UseExceptionHandler("/Home/Error");
+        app.UseHsts();
+    }
+
+    app.UseHttpsRedirection();
+    app.UseStaticFiles();
+    app.UseRouting();
+    app.UseAuthorization();
+
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapControllerRoute(
+            name: "default",
+            pattern: "{controller=Home}/{action=Index}/{id?}");
+    });
+}
