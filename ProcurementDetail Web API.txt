@@ -1,0 +1,39 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace YourNamespace.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProcurementDetailsController : ControllerBase
+    {
+        private readonly YourDbContext _context;
+
+        public ProcurementDetailsController(YourDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/ProcurementDetails
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProcurementDetail>>> GetAllProcurementDetails()
+        {
+            return await _context.ProcurementDetails
+                                 .Include(pd => pd.Product)
+                                 .Include(pd => pd.Sup)
+                                 .ToListAsync();
+        }
+
+        // POST: api/ProcurementDetails
+        [HttpPost]
+        public async Task<ActionResult<ProcurementDetail>> PostProcurementDetail(ProcurementDetail procurementDetail)
+        {
+            _context.ProcurementDetails.Add(procurementDetail);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetAllProcurementDetails", new { id = procurementDetail.ProcurementId }, procurementDetail);
+        }
+    }
+}
