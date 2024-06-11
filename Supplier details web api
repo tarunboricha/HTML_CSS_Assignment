@@ -1,0 +1,83 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+[Route("api/[controller]")]
+[ApiController]
+public class SupplierDetailsController : ControllerBase
+{
+    private readonly SupplierDbContext _context;
+
+    public SupplierDetailsController(SupplierDbContext context)
+    {
+        _context = context;
+    }
+
+    // GET: api/SupplierDetails
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<SupplierDetail>>> GetSupplierDetails()
+    {
+        return await _context.SupplierDetails.ToListAsync();
+    }
+
+    // GET: api/SupplierDetails/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<SupplierDetail>> GetSupplierDetail(int id)
+    {
+        var supplierDetail = await _context.SupplierDetails.FindAsync(id);
+
+        if (supplierDetail == null)
+        {
+            return NotFound();
+        }
+
+        return supplierDetail;
+    }
+
+    // POST: api/SupplierDetails
+    [HttpPost]
+    public async Task<ActionResult<SupplierDetail>> PostSupplierDetail(SupplierDetail supplierDetail)
+    {
+        _context.SupplierDetails.Add(supplierDetail);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction("GetSupplierDetail", new { id = supplierDetail.SupId }, supplierDetail);
+    }
+
+    // PUT: api/SupplierDetails/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutSupplierDetail(int id, SupplierDetail supplierDetail)
+    {
+        if (id != supplierDetail.SupId)
+        {
+            return BadRequest();
+        }
+
+        _context.Entry(supplierDetail).State = EntityState.Modified;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!SupplierDetailExists(id))
+            {
+                return NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        return NoContent();
+    }
+
+    private bool SupplierDetailExists(int id)
+    {
+        return _context.SupplierDetails.Any(e => e.SupId == id);
+    }
+}
