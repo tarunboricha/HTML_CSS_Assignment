@@ -2,6 +2,11 @@ Install-Package Microsoft.EntityFrameworkCore
 Install-Package Microsoft.EntityFrameworkCore.SqlServer
 Install-Package Microsoft.EntityFrameworkCore.Tools
 
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\local;Database=your_database_name;Trusted_Connection=True;MultipleActiveResultSets=true"
+  }
+}
 
 
 dotnet ef dbcontext scaffold "Server=your_server;Database=your_database;User Id=your_user;Password=your_password;" Microsoft.EntityFrameworkCore.SqlServer -o Models
