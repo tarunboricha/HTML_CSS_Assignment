@@ -72,3 +72,183 @@ public partial class SalesItem
     public virtual Product Product { get; set; }
     public virtual SupplierDetail SupplierDetail { get; set; }
 }
+
+
+
+
+
+
+@model YourNamespace.ViewModels.OrderViewModel
+@{
+    ViewBag.Title = "Billing";
+}
+
+<h2>Billing</h2>
+
+<div>
+    <label for="Customer">Select Customer</label>
+    @Html.DropDownList("CustomerId", (SelectList)ViewBag.Customers, "Select Customer", new { @class = "form-control", id = "CustomerId" })
+</div>
+
+<div>
+    <label for="Category">Select Category</label>
+    @Html.DropDownList("CategoryId", (SelectList)ViewBag.Categories, "Select Category", new { @class = "form-control", id = "CategoryId" })
+</div>
+
+<div>
+    <label for="Product">Select Product</label>
+    <select id="ProductId" class="form-control">
+        <option value="">Select Product</option>
+    </select>
+</div>
+
+<div>
+    <label for="Price">Price</label>
+    <input type="text" id="Price" class="form-control" readonly />
+</div>
+
+<div>
+    <label for="Quantity">Quantity</label>
+    <input type="number" id="Quantity" class="form-control" />
+</div>
+
+<button id="AddProduct" class="btn btn-primary">Add Product</button>
+
+<h3>Order Details</h3>
+<table id="OrderTable" class="table">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<button id="Checkout" class="btn btn-success">Checkout</button>
+
+@section scripts {
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#CategoryId').change(function() {
+                var categoryId = $(this).val();
+                if (categoryId) {
+                    $.getJSON('@Url.Action("GetProducts")', { categoryId: categoryId }, function(data) {
+                        var productDropdown = $('#ProductId');
+                        productDropdown.empty();
+                        productDropdown.append('<option value="">Select Product</option>');
+                        $.each(data, function(index, item) {
+                            productDropdown.append('<option value="' + item.ProductId + '" data-price="' + item.Price + '">' + item.ProductName + '</option>');
+                        });
+                    });
+                }
+            });
+
+            $('#ProductId').change(function() {
+                var price = $('option:selected', this).data('price');
+                $('#Price').val(price);
+            });
+
+            var orderItems = [];
+
+            $('#AddProduct').click(function() {
+                var productId = $('#ProductId').val();
+                var productName = $('#ProductId option:selected').text();
+                var price = $('#Price').val();
+                var quantity = $('#Quantity').val();
+                if (productId && quantity > 0) {
+                    var total = price * quantity;
+                    orderItems.push({ ProductId: productId, Quantity: quantity, Price: price });
+                    var newRow = '<tr><td>' + productName + '</td><td>' + price + '</td><td>' + quantity + '</td><td>' + total + '</td></tr>';
+                    $('#OrderTable tbody').append(newRow);
+                }
+            });
+
+            $('#Checkout').click(function() {
+                var customerId = $('#CustomerId').val();
+                var order = { CustomerId: customerId, OrderItems: orderItems };
+                $.ajax({
+                    url: '@Url.Action("Checkout")',
+                    type: 'POST',
+                    data: JSON.stringify(order),
+                    contentType: 'application/json; charset=utf-8',
+                    success: function(result) {
+                        alert('Order placed successfully');
+                    }
+                });
+            });
+        });
+    </script>
+}
+
+
+
+
+
+using System.Linq;
+using System.Web.Mvc;
+using YourNamespace.Models;  // Adjust the namespace
+
+public class BillingController : Controller
+{
+    private YourDbContext db = new YourDbContext();  // Adjust to your DbContext
+
+    // GET: Billing
+    public ActionResult Index()
+    {
+        var categories = db.ProductCategories.ToList();
+        var customers = db.CustomerDetails.ToList();
+        ViewBag.Categories = new SelectList(categories, "CategoryId", "CategoryName");
+        ViewBag.Customers = new SelectList(customers, "CustomerId", "CustomerName");
+        return View();
+    }
+
+    // Get Products based on category
+    public JsonResult GetProducts(int categoryId)
+    {
+        var products = db.Products.Where(p => p.CategoryId == categoryId).Select(p => new
+        {
+            ProductId = p.ProductId,
+            ProductName = p.ProductName,
+            Price = p.Price
+        }).ToList();
+        return Json(products, JsonRequestBehavior.AllowGet);
+    }
+
+    [HttpPost]
+    public ActionResult Checkout(OrderViewModel order)
+    {
+        if (ModelState.IsValid)
+        {
+            // Save order logic here
+
+            // For simplicity, assume an Order and OrderDetail entity
+            var newOrder = new Order
+            {
+                CustomerId = order.CustomerId,
+                OrderDate = DateTime.Now
+            };
+            db.Orders.Add(newOrder);
+            db.SaveChanges();
+
+            foreach (var item in order.OrderItems)
+            {
+                var orderDetail = new OrderDetail
+                {
+                    OrderId = newOrder.OrderId,
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    Price = item.Price
+                };
+                db.OrderDetails.Add(orderDetail);
+            }
+            db.SaveChanges();
+
+            return RedirectToAction("Index");
+        }
+        return View("Index", order);
+    }
+}
