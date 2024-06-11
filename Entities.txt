@@ -124,6 +124,21 @@ public partial class ProcurementDetail
 }
 
 
+public partial class SalesHistory
+{
+    public int SalesId { get; set; }
+
+    public int? CustomerId { get; set; }
+
+    public DateOnly PurchaseDate { get; set; }
+
+    public int? BillTotal { get; set; }
+
+    public virtual CustomerDetail? Customer { get; set; }
+}
+
+
+
 
 
 @model YourNamespace.ViewModels.OrderViewModel
