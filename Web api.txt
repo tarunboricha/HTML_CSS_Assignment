@@ -4,7 +4,7 @@ Install-Package Microsoft.EntityFrameworkCore.Tools
 
 
 
-
+dotnet ef dbcontext scaffold "Server=your_server;Database=your_database;User Id=your_user;Password=your_password;" Microsoft.EntityFrameworkCore.SqlServer -o Models
 
 To implement an MVC Core Web API that fetches a list of products using the `Product` model you provided, follow these steps:
 
