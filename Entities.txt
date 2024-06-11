@@ -1,0 +1,18 @@
+public partial class CustomerDetail
+{
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
+    public CustomerDetail()
+    {
+        this.SalesHistories = new HashSet<SalesHistory>();
+        this.SalesItems = new HashSet<SalesItem>();
+    }
+
+    public int CustomerId { get; set; }
+    public string CustomerName { get; set; }
+    public string CustomerContact { get; set; }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+    public virtual ICollection<SalesHistory> SalesHistories { get; set; }
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+    public virtual ICollection<SalesItem> SalesItems { get; set; }
+}
