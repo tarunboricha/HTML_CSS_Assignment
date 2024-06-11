@@ -1,0 +1,36 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace YourNamespace.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductCategoriesController : ControllerBase
+    {
+        private readonly YourDbContext _context;
+
+        public ProductCategoriesController(YourDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/ProductCategories
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProductCategory>>> GetAllProductCategories()
+        {
+            return await _context.ProductCategories.ToListAsync();
+        }
+
+        // POST: api/ProductCategories
+        [HttpPost]
+        public async Task<ActionResult<ProductCategory>> PostProductCategory(ProductCategory productCategory)
+        {
+            _context.ProductCategories.Add(productCategory);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetAllProductCategories", new { id = productCategory.CategoryId }, productCategory);
+        }
+    }
+}
