@@ -1,0 +1,170 @@
+To implement an MVC Core Web API that fetches a list of products using the `Product` model you provided, follow these steps:
+
+1. **Set up the ASP.NET Core Web API project:**
+    - Create a new ASP.NET Core Web API project if you haven't already.
+    - Add necessary NuGet packages for Entity Framework Core (EF Core).
+
+2. **Configure the database context:**
+    - Create a `DbContext` class to manage the database connection and set up the `Product` entity.
+
+3. **Create the controller:**
+    - Create an API controller to handle HTTP requests and responses.
+
+### Step-by-Step Implementation:
+
+#### Step 1: Setting up the Project
+You can create a new ASP.NET Core Web API project using Visual Studio or the .NET CLI.
+
+```bash
+dotnet new webapi -n ProductAPI
+cd ProductAPI
+```
+
+#### Step 2: Configure the Database Context
+
+Add Entity Framework Core and any database provider you plan to use (e.g., SQL Server).
+
+```bash
+dotnet add package Microsoft.EntityFrameworkCore
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+```
+
+Create a `ProductContext` class:
+
+```csharp
+using Microsoft.EntityFrameworkCore;
+
+public class ProductContext : DbContext
+{
+    public ProductContext(DbContextOptions<ProductContext> options) : base(options) { }
+
+    public DbSet<Product> Products { get; set; }
+    public DbSet<ProcurementDetail> ProcurementDetails { get; set; }
+    public DbSet<ProductInventory> ProductInventories { get; set; }
+    public DbSet<SalesItem> SalesItems { get; set; }
+    public DbSet<ProductCategory> ProductCategories { get; set; }
+}
+```
+
+Add the database connection string in `appsettings.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=ProductDb;Trusted_Connection=True;MultipleActiveResultSets=true"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "AllowedHosts": "*"
+}
+```
+
+In `Startup.cs` or `Program.cs` (depending on .NET version), add the database context:
+
+```csharp
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddDbContext<ProductContext>(options =>
+            options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+        services.AddControllers();
+    }
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+        }
+
+        app.UseRouting();
+
+        app.UseAuthorization();
+
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+        });
+    }
+}
+```
+
+#### Step 3: Create the Controller
+
+Create a `ProductsController` to handle API requests:
+
+```csharp
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+[Route("api/[controller]")]
+[ApiController]
+public class ProductsController : ControllerBase
+{
+    private readonly ProductContext _context;
+
+    public ProductsController(ProductContext context)
+    {
+        _context = context;
+    }
+
+    // GET: api/Products
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+    {
+        return await _context.Products
+            .Include(p => p.ProcurementDetails)
+            .Include(p => p.ProductInventories)
+            .Include(p => p.SalesItems)
+            .Include(p => p.ProductCategory)
+            .ToListAsync();
+    }
+
+    // GET: api/Products/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Product>> GetProduct(int id)
+    {
+        var product = await _context.Products
+            .Include(p => p.ProcurementDetails)
+            .Include(p => p.ProductInventories)
+            .Include(p => p.SalesItems)
+            .Include(p => p.ProductCategory)
+            .FirstOrDefaultAsync(p => p.ProductId == id);
+
+        if (product == null)
+        {
+            return NotFound();
+        }
+
+        return product;
+    }
+}
+```
+
+This controller has two methods:
+- `GetProducts`: Retrieves the list of all products, including their related data.
+- `GetProduct`: Retrieves a single product by its `ProductId`, including its related data.
+
+#### Step 4: Run the Application
+
+Run the application and navigate to `/api/products` to see the list of products.
+
+```bash
+dotnet run
+```
+
+### Additional Considerations:
+- **Error Handling:** Implement proper error handling and logging.
+- **DTOs:** Consider using Data Transfer Objects (DTOs) to shape the data returned by your API.
+- **Validation:** Add model validation to ensure data integrity.
+
+This setup provides a basic implementation of a Web API to fetch a list of products and their related data using Entity Framework Core in ASP.NET Core.
