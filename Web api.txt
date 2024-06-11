@@ -1,3 +1,11 @@
+Install-Package Microsoft.EntityFrameworkCore
+Install-Package Microsoft.EntityFrameworkCore.SqlServer
+Install-Package Microsoft.EntityFrameworkCore.Tools
+
+
+
+
+
 To implement an MVC Core Web API that fetches a list of products using the `Product` model you provided, follow these steps:
 
 1. **Set up the ASP.NET Core Web API project:**
