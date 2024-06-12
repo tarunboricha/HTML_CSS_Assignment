@@ -420,3 +420,103 @@ public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         });
     </script>
 }
+
+
+
+
+
+
+
+
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using YourNamespace.Models;
+using YourNamespace.ViewModels;
+
+public class BillingController : Controller
+{
+    private readonly IHttpClientFactory _httpClientFactory;
+
+    public BillingController(IHttpClientFactory httpClientFactory)
+    {
+        _httpClientFactory = httpClientFactory;
+    }
+
+    public async Task<IActionResult> Index(int customerId)
+    {
+        var client = _httpClientFactory.CreateClient();
+
+        var customerResponse = await client.GetAsync($"https://yourapiurl/api/customers/{customerId}");
+        if (!customerResponse.IsSuccessStatusCode)
+        {
+            return NotFound("Customer not found");
+        }
+
+        var customerData = await customerResponse.Content.ReadAsStringAsync();
+        var customer = JsonConvert.DeserializeObject<CustomerDetail>(customerData);
+
+        var categoryResponse = await client.GetAsync("https://yourapiurl/api/categories");
+        if (!categoryResponse.IsSuccessStatusCode)
+        {
+            return StatusCode((int)categoryResponse.StatusCode, "Error fetching categories");
+        }
+
+        var categoryData = await categoryResponse.Content.ReadAsStringAsync();
+        var categories = JsonConvert.DeserializeObject<List<ProductCategory>>(categoryData);
+
+        var model = new BillingViewModel
+        {
+            Customer = customer,
+            Categories = categories
+        };
+
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetProductsByCategory(int categoryId)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetAsync($"https://yourapiurl/api/products?categoryId={categoryId}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Json(new { success = false, message = "Error fetching products" });
+        }
+
+        var data = await response.Content.ReadAsStringAsync();
+        var products = JsonConvert.DeserializeObject<List<Product>>(data);
+
+        if (products == null || !products.Any())
+        {
+            return Json(new { success = false, message = "No products found" });
+        }
+
+        return Json(new { success = true, products });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Checkout([FromBody] List<SalesItemViewModel> items)
+    {
+        if (items == null || !items.Any())
+        {
+            return BadRequest("No items to checkout");
+        }
+
+        var client = _httpClientFactory.CreateClient();
+        var content = new StringContent(JsonConvert.SerializeObject(items), System.Text.Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync("https://yourapiurl/api/salesitems", content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return StatusCode((int)response.StatusCode, "Error placing order");
+        }
+
+        return Ok("Order placed successfully");
+    }
+}
