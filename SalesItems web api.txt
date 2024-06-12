@@ -1,0 +1,34 @@
+[ApiController]
+[Route("api/[controller]")]
+public class SalesItemsController : ControllerBase
+{
+    private readonly ApplicationDbContext _context;
+
+    public SalesItemsController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateSalesItems([FromBody] List<SalesItemDto> salesItemsDto)
+    {
+        if (salesItemsDto == null || !salesItemsDto.Any())
+        {
+            return BadRequest("Sales items list is empty.");
+        }
+
+        var salesItems = salesItemsDto.Select(dto => new SalesItem
+        {
+            CustomerId = dto.CustomerId,
+            SupId = dto.SupId,
+            ProductId = dto.ProductId,
+            Qty = dto.Qty,
+            PricePerItem = dto.PricePerItem
+        }).ToList();
+
+        await _context.SalesItems.AddRangeAsync(salesItems);
+        await _context.SaveChangesAsync();
+
+        return Ok("Sales items created successfully.");
+    }
+}
