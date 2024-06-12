@@ -41,7 +41,6 @@ public partial class ProductCategory
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 }
 
-
 public partial class SalesItem
 {
     public int SalesId { get; set; }
@@ -56,9 +55,9 @@ public partial class SalesItem
 
     public int PricePerItem { get; set; }
 
-    public virtual CustomerDetail Customer { get; set; } = null!;
+    public virtual CustomerDetail? Customer { get; set; }
 
-    public virtual Product Product { get; set; } = null!;
+    public virtual Product? Product { get; set; }
 
     public virtual SupplierDetail? Sup { get; set; }
 }
