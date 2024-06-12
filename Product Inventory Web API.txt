@@ -78,6 +78,11 @@ namespace YourNamespace.Controllers
         [HttpPost]
         public async Task<ActionResult<ProductInventory>> PostProductInventoryDetail(ProductInventory productInventory)
         {
+            if (ProductInventoryExists(productInventory.SupId, productInventory.ProductId))
+            {
+                return BadRequest("ProductInventory with this SupId and ProductId already exists.");
+            }
+
             _context.ProductInventories.Add(productInventory);
             await _context.SaveChangesAsync();
 
