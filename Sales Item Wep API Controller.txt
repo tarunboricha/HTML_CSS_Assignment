@@ -33,6 +33,21 @@ namespace YourNamespace.Controllers
             return salesItems;
         }
 
+        // GET: api/SalesItem/{salesId}/{productId}
+        [HttpGet("{salesId}/{productId}")]
+        public async Task<ActionResult<SalesItem>> GetSalesItemBySalesIdAndProductId(int salesId, int productId)
+        {
+            var salesItem = await _context.SalesItems
+                                          .FirstOrDefaultAsync(si => si.SalesId == salesId && si.ProductId == productId);
+
+            if (salesItem == null)
+            {
+                return NotFound();
+            }
+
+            return salesItem;
+        }
+
         // POST: api/SalesItem
         [HttpPost]
         public async Task<ActionResult<SalesItem>> PostSalesItem(SalesItem salesItem)
@@ -40,7 +55,7 @@ namespace YourNamespace.Controllers
             _context.SalesItems.Add(salesItem);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSalesItemByCustomerId", new { customerId = salesItem.CustomerId }, salesItem);
+            return CreatedAtAction("GetSalesItemBySalesIdAndProductId", new { salesId = salesItem.SalesId, productId = salesItem.ProductId }, salesItem);
         }
     }
 }
