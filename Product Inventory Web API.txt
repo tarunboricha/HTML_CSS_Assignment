@@ -1,0 +1,92 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace YourNamespace.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductInventoryController : ControllerBase
+    {
+        private readonly YourDbContext _context;
+
+        public ProductInventoryController(YourDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/ProductInventory
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProductInventory>>> GetProductInventoryDetails()
+        {
+            return await _context.ProductInventories
+                                 .Include(pi => pi.Product)
+                                 .Include(pi => pi.Sup)
+                                 .ToListAsync();
+        }
+
+        // GET: api/ProductInventory/SupId/ProductId
+        [HttpGet("{SupId}/{ProductId}")]
+        public async Task<ActionResult<ProductInventory>> GetCurrentProductInventoryDetail(int SupId, int ProductId)
+        {
+            var productInventory = await _context.ProductInventories
+                                                 .Include(pi => pi.Product)
+                                                 .Include(pi => pi.Sup)
+                                                 .FirstOrDefaultAsync(pi => pi.SupId == SupId && pi.ProductId == ProductId);
+
+            if (productInventory == null)
+            {
+                return NotFound();
+            }
+
+            return productInventory;
+        }
+
+        // PUT: api/ProductInventory/SupId/ProductId
+        [HttpPut("{SupId}/{ProductId}")]
+        public async Task<IActionResult> PutProductInventory(int SupId, int ProductId, ProductInventory productInventory)
+        {
+            if (SupId != productInventory.SupId || ProductId != productInventory.ProductId)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(productInventory).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProductInventoryExists(SupId, ProductId))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        // POST: api/ProductInventory
+        [HttpPost]
+        public async Task<ActionResult<ProductInventory>> PostProductInventoryDetail(ProductInventory productInventory)
+        {
+            _context.ProductInventories.Add(productInventory);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetCurrentProductInventoryDetail", new { SupId = productInventory.SupId, ProductId = productInventory.ProductId }, productInventory);
+        }
+
+        private bool ProductInventoryExists(int SupId, int ProductId)
+        {
+            return _context.ProductInventories.Any(e => e.SupId == SupId && e.ProductId == ProductId);
+        }
+    }
+}
