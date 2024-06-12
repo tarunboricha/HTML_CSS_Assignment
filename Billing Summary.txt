@@ -1,0 +1,233 @@
+@model YourNamespace.ViewModels.BillSummaryViewModel
+
+@{
+    ViewData["Title"] = "Bill Summary";
+}
+
+<h2>Order Placed Successfully</h2>
+<p>Sales ID: @Model.SalesId</p>
+
+<h3>Bill Summary</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.SalesItems)
+        {
+            <tr>
+                <td>@item.Product.ProductName</td>
+                <td>@item.PricePerItem</td>
+                <td>@item.Qty</td>
+                <td>@(item.PricePerItem * item.Qty)</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using YourNamespace.Models;
+using YourNamespace.ViewModels;
+
+public class BillingController : Controller
+{
+    private readonly IHttpClientFactory _httpClientFactory;
+
+    public BillingController(IHttpClientFactory httpClientFactory)
+    {
+        _httpClientFactory = httpClientFactory;
+    }
+
+    public async Task<IActionResult> Index(int customerId)
+    {
+        var client = _httpClientFactory.CreateClient();
+
+        var customerResponse = await client.GetAsync($"https://yourapiurl/api/customers/{customerId}");
+        if (!customerResponse.IsSuccessStatusCode)
+        {
+            return NotFound("Customer not found");
+        }
+
+        var customerData = await customerResponse.Content.ReadAsStringAsync();
+        var customer = JsonConvert.DeserializeObject<CustomerDetail>(customerData);
+
+        var categoryResponse = await client.GetAsync("https://yourapiurl/api/categories");
+        if (!categoryResponse.IsSuccessStatusCode)
+        {
+            return StatusCode((int)categoryResponse.StatusCode, "Error fetching categories");
+        }
+
+        var categoryData = await categoryResponse.Content.ReadAsStringAsync();
+        var categories = JsonConvert.DeserializeObject<List<ProductCategory>>(categoryData);
+
+        var model = new BillingViewModel
+        {
+            Customer = customer,
+            Categories = categories
+        };
+
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetProductsByCategory(int categoryId)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetAsync($"https://yourapiurl/api/products?categoryId={categoryId}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Json(new { success = false, message = "Error fetching products" });
+        }
+
+        var data = await response.Content.ReadAsStringAsync();
+        var products = JsonConvert.DeserializeObject<List<Product>>(data);
+
+        if (products == null || !products.Any())
+        {
+            return Json(new { success = false, message = "No products found" });
+        }
+
+        return Json(new { success = true, products });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Checkout([FromBody] List<SalesItemViewModel> items)
+    {
+        if (items == null || !items.Any())
+        {
+            return BadRequest("No items to checkout");
+        }
+
+        var client = _httpClientFactory.CreateClient();
+        var content = new StringContent(JsonConvert.SerializeObject(items), System.Text.Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync("https://yourapiurl/api/salesitems", content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return StatusCode((int)response.StatusCode, "Error placing order");
+        }
+
+        var salesId = await response.Content.ReadAsStringAsync(); // Assuming the salesId is returned as a string
+
+        return RedirectToAction("BillSummary", new { salesId });
+    }
+
+    public async Task<IActionResult> BillSummary(int salesId)
+    {
+        var client = _httpClientFactory.CreateClient();
+
+        var response = await client.GetAsync($"https://yourapiurl/api/salesitems/{salesId}");
+        if (!response.IsSuccessStatusCode)
+        {
+            return NotFound("Sales record not found");
+        }
+
+        var data = await response.Content.ReadAsStringAsync();
+        var salesItems = JsonConvert.DeserializeObject<List<SalesItem>>(data);
+
+        return View(new BillSummaryViewModel
+        {
+            SalesId = salesId,
+            SalesItems = salesItems
+        });
+    }
+}
+
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#categorySelect').change(function () {
+                var categoryId = $(this).val();
+                var productSelect = $('#productSelect');
+                productSelect.empty();
+                productSelect.append('<option value="">-- Select Product --</option>');
+                $('#price').val('');
+                if (categoryId) {
+                    $.getJSON('/Billing/GetProductsByCategory/' + categoryId, function (data) {
+                        if (data.success) {
+                            productSelect.prop('disabled', false);
+                            $.each(data.products, function (index, item) {
+                                productSelect.append('<option value="' + item.productId + '" data-price="' + item.price + '">' + item.productName + '</option>');
+                            });
+                        } else {
+                            productSelect.prop('disabled', true);
+                            alert(data.message);
+                        }
+                    });
+                } else {
+                    productSelect.prop('disabled', true);
+                }
+            });
+
+            $('#productSelect').change(function () {
+                var selectedOption = $(this).find('option:selected');
+                var price = selectedOption.data('price');
+                $('#price').val(price);
+            });
+
+            $('#addProduct').click(function () {
+                var productSelect = $('#productSelect');
+                var selectedOption = productSelect.find('option:selected');
+                var productName = selectedOption.text();
+                var productId = selectedOption.val();
+                var price = $('#price').val();
+                var qty = $('#qty').val();
+                var total = price * qty;
+
+                if (productId && qty > 0) {
+                    var newRow = '<tr data-product-id="' + productId + '"><td>' + productName + '</td><td>' + price + '</td><td>' + qty + '</td><td>' + total + '</td><td><button type="button" class="btn btn-danger btn-sm remove-product">Remove</button></td></tr>';
+                    $('#selectedProductsTable tbody').append(newRow);
+                }
+
+                // Add remove product functionality
+                $('.remove-product').off('click').on('click', function () {
+                    $(this).closest('tr').remove();
+                });
+            });
+
+            $('#checkout').click(function () {
+                var customerId = '@Model.Customer.CustomerId';
+                var items = [];
+                $('#selectedProductsTable tbody tr').each(function () {
+                    var row = $(this);
+                    var item = {
+                        CustomerId: customerId,
+                        ProductId: row.data('product-id'),
+                        Qty: row.find('td:nth-child(3)').text(),
+                        PricePerItem: row.find('td:nth-child(2)').text()
+                    };
+                    items.push(item);
+                });
+
+                $.ajax({
+                    url: '/Billing/Checkout',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(items),
+                    success: function () {
+                        window.location.href = '/Billing/BillSummary'; // Adjust this line to redirect properly
+                    },
+                    error: function () {
+                        alert('Error during checkout');
+                    }
+                });
+            });
+        });
+    </script>
+}
