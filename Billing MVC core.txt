@@ -251,3 +251,172 @@ public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
             pattern: "{controller=Home}/{action=Index}/{id?}");
     });
 }
+
+
+
+
+
+
+
+
+
+@model YourNamespace.ViewModels.BillingViewModel
+
+@{
+    ViewData["Title"] = "Billing Page";
+}
+
+<h2 class="mt-4">Billing Page</h2>
+
+<div class="card mt-4">
+    <div class="card-header">
+        Customer Details
+    </div>
+    <div class="card-body">
+        <p><strong>Name:</strong> @Model.Customer.CustomerName</p>
+        <p><strong>Contact:</strong> @Model.Customer.CustomerContact</p>
+    </div>
+</div>
+
+<div class="mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="categorySelect" class="form-label">Select Category</label>
+                <select id="categorySelect" class="form-select">
+                    <option value="">-- Select Category --</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.CategoryId">@category.CategoryName</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="productSelect" class="form-label">Select Product</label>
+                <select id="productSelect" class="form-select" disabled>
+                    <option value="">-- Select Product --</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="price" class="form-label">Price</label>
+                <input type="text" id="price" class="form-control" readonly />
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="qty" class="form-label">Quantity</label>
+                <input type="number" id="qty" class="form-control" value="1" min="1" />
+            </div>
+        </div>
+    </div>
+    <button type="button" id="addProduct" class="btn btn-primary">Add Product</button>
+</div>
+
+<div class="mt-4">
+    <h3>Selected Products</h3>
+    <table class="table table-striped" id="selectedProductsTable">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <button type="button" id="checkout" class="btn btn-success">Checkout</button>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#categorySelect').change(function () {
+                var categoryId = $(this).val();
+                var productSelect = $('#productSelect');
+                productSelect.empty();
+                productSelect.append('<option value="">-- Select Product --</option>');
+                $('#price').val('');
+                if (categoryId) {
+                    $.getJSON('/Billing/GetProductsByCategory/' + categoryId, function (data) {
+                        if (data.success) {
+                            productSelect.prop('disabled', false);
+                            $.each(data.products, function (index, item) {
+                                productSelect.append('<option value="' + item.productId + '" data-price="' + item.price + '">' + item.productName + '</option>');
+                            });
+                        } else {
+                            productSelect.prop('disabled', true);
+                            alert(data.message);
+                        }
+                    });
+                } else {
+                    productSelect.prop('disabled', true);
+                }
+            });
+
+            $('#productSelect').change(function () {
+                var selectedOption = $(this).find('option:selected');
+                var price = selectedOption.data('price');
+                $('#price').val(price);
+            });
+
+            $('#addProduct').click(function () {
+                var productSelect = $('#productSelect');
+                var selectedOption = productSelect.find('option:selected');
+                var productName = selectedOption.text();
+                var productId = selectedOption.val();
+                var price = $('#price').val();
+                var qty = $('#qty').val();
+                var total = price * qty;
+
+                if (productId && qty > 0) {
+                    var newRow = '<tr data-product-id="' + productId + '"><td>' + productName + '</td><td>' + price + '</td><td>' + qty + '</td><td>' + total + '</td><td><button type="button" class="btn btn-danger btn-sm remove-product">Remove</button></td></tr>';
+                    $('#selectedProductsTable tbody').append(newRow);
+                }
+
+                // Add remove product functionality
+                $('.remove-product').off('click').on('click', function () {
+                    $(this).closest('tr').remove();
+                });
+            });
+
+            $('#checkout').click(function () {
+                var customerId = '@Model.Customer.CustomerId';
+                var items = [];
+                $('#selectedProductsTable tbody tr').each(function () {
+                    var row = $(this);
+                    var item = {
+                        CustomerId: customerId,
+                        ProductId: row.data('product-id'),
+                        Qty: row.find('td:nth-child(3)').text(),
+                        PricePerItem: row.find('td:nth-child(2)').text()
+                    };
+                    items.push(item);
+                });
+
+                $.ajax({
+                    url: '/Billing/Checkout',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(items),
+                    success: function (response) {
+                        alert(response);
+                        // Optionally, clear the table after successful checkout
+                        $('#selectedProductsTable tbody').empty();
+                    },
+                    error: function (error) {
+                        alert('Error: ' + error.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+}
