@@ -1,0 +1,46 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace YourNamespace.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class SalesItemController : ControllerBase
+    {
+        private readonly YourDbContext _context;
+
+        public SalesItemController(YourDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/SalesItem/CustomerId/{customerId}
+        [HttpGet("CustomerId/{customerId}")]
+        public async Task<ActionResult<IEnumerable<SalesItem>>> GetSalesItemByCustomerId(int customerId)
+        {
+            var salesItems = await _context.SalesItems
+                                           .Where(si => si.CustomerId == customerId)
+                                           .ToListAsync();
+
+            if (salesItems == null || !salesItems.Any())
+            {
+                return NotFound();
+            }
+
+            return salesItems;
+        }
+
+        // POST: api/SalesItem
+        [HttpPost]
+        public async Task<ActionResult<SalesItem>> PostSalesItem(SalesItem salesItem)
+        {
+            _context.SalesItems.Add(salesItem);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetSalesItemByCustomerId", new { customerId = salesItem.CustomerId }, salesItem);
+        }
+    }
+}
