@@ -91,6 +91,46 @@ public class CustomerDetailsController : ControllerBase
         return NoContent();
     }
 
+
+
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+[Route("api/[controller]")]
+[ApiController]
+public class ProductsController : ControllerBase
+{
+    private readonly SupplierDbContext _context;
+
+    public ProductsController(SupplierDbContext context)
+    {
+        _context = context;
+    }
+
+    // GET: api/Products/bySupplier/{supplierId}
+    [HttpGet("bySupplier/{supplierId}")]
+    public async Task<ActionResult<IEnumerable<Product>>> GetProductsBySupplier(int supplierId)
+    {
+        var products = await _context.Products
+            .Include(p => p.ProductInventories)
+            .Include(p => p.ProcurementDetails)
+            .Where(p => p.ProcurementDetails.Any(pd => pd.SupplierId == supplierId) && p.ProductInventories.Any(pi => pi.Quantity > 0))
+            .ToListAsync();
+
+        if (!products.Any())
+        {
+            return NotFound();
+        }
+
+        return products;
+    }
+}
+
+
     private bool CustomerDetailExists(int id)
     {
         return _context.CustomerDetails.Any(e => e.CustomerId == id);
