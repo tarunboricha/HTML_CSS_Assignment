@@ -136,3 +136,40 @@ public class ProductsController : ControllerBase
         return _context.CustomerDetails.Any(e => e.CustomerId == id);
     }
 }
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+[Route("api/[controller]")]
+[ApiController]
+public class SupplierDetailsController : ControllerBase
+{
+    private readonly SupplierDbContext _context;
+
+    public SupplierDetailsController(SupplierDbContext context)
+    {
+        _context = context;
+    }
+
+    // GET: api/SupplierDetails/byProduct/{productId}
+    [HttpGet("byProduct/{productId}")]
+    public async Task<ActionResult<IEnumerable<SupplierDetail>>> GetSupplierDetailsByProductId(int productId)
+    {
+        var suppliers = await _context.SupplierDetails
+            .Include(s => s.ProcurementDetails)
+            .ThenInclude(pd => pd.Product)
+            .Where(s => s.ProcurementDetails.Any(pd => pd.ProductId == productId))
+            .ToListAsync();
+
+        if (!suppliers.Any())
+        {
+            return NotFound();
+        }
+
+        return suppliers;
+    }
+
+    // Other actions like GET, POST, PUT for SupplierDetails...
+}
