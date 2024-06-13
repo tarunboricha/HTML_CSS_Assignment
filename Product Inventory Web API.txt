@@ -97,52 +97,143 @@ namespace YourNamespace.Controllers
 }
 
 -----------------------------------------------------------------------------------------------------------------
-
-@model SportsStoreManagementSystem.Entities.ProductInventory
+@model IEnumerable<SportsStoreManagementSystem.Entities.ProductInventory>
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Index";
 }
 
-<h1>Return</h1>
+<h1>Product Inventory</h1>
 
-<h4>ProductInventory</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="SupId" />
-            <input type="hidden" asp-for="ProductId" />
-            <div class="form-group">
-                <label asp-for="Stocks" class="control-label">Enter the unit of Stocks Returned:</label>
-                <input asp-for="Stocks" class="form-control" />
-                <span asp-validation-for="Stocks" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
-    </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+@* <p>
+    <a asp-action="Create">Create New</a>
+</p> *@
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.SupId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ProductId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Stocks)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.SupId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ProductId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Stocks)
+            </td>
+            <td>
+                    @Html.ActionLink("Return", "Edit", new { id = item.SupId, id2 = item.ProductId })
+                @* @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ }) *@
+            </td>
+        </tr>
 }
+    </tbody>
+</table>
+
 
 ==========================================================================
 
-new { htmlAttributes = new { @class = "form-control", @id= "stocks", @required = "true" }
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
-<script type="text/javascript">
-    $(document).ready(function () {
-        var max = $('#stocks').val();
-        $('#stocks').attr('min', 0);
-        $('#stocks').attr('max', max);
-    });
-</script>
+namespace SportsStoreManagementSystem.Entities
+{
+    public partial class ProductInventory
+    {
+        public int SupId { get; set; }
+
+        public int ProductId { get; set; }
+
+        public int Stocks { get; set; }
+
+        public virtual Product? Product { get; set; } = null!;
+
+        public virtual SupplierDetail? Sup { get; set; } = null!;
+    }
+}
+
+
+==========================================================================================
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.Entities
+{
+    public partial class Product
+    {
+        public int CategoryId { get; set; }
+
+        public int ProductId { get; set; }
+
+        public string? ProductName { get; set; }
+
+        public int Price { get; set; }
+
+        [JsonIgnore]
+        public virtual ProductCategory? Category { get; set; }
+
+        [JsonIgnore]
+        public virtual ICollection<ProcurementDetail> ProcurementDetails { get; set; } = new List<ProcurementDetail>();
+
+        [JsonIgnore]
+        public virtual ICollection<ProductInventory> ProductInventories { get; set; } = new List<ProductInventory>();
+
+        [JsonIgnore]
+        public virtual ICollection<SalesItem> SalesItems { get; set; } = new List<SalesItem>();
+    }
+}
+
+===================================================================================================================
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.Entities
+{
+    public partial class SupplierDetail
+    {
+        public int SupId { get; set; }
+
+        public string? SubName { get; set; }
+
+        public string? SubAddress { get; set; }
+
+        public string? SubContact { get; set; }
+
+        public virtual ICollection<ProcurementDetail> ProcurementDetails { get; set; } = new List<ProcurementDetail>();
+
+        [JsonIgnore]
+        public virtual ICollection<ProductInventory> ProductInventories { get; set; } = new List<ProductInventory>();
+
+        public virtual ICollection<SalesItem> SalesItems { get; set; } = new List<SalesItem>();
+    }
+}
+
+=======================================================================================================================
