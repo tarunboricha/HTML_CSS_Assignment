@@ -1,0 +1,94 @@
+@model SportsStoreManagementSystem.Entities.SupplierDetail
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>SupplierDetail</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form id="supplierForm" asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="SubName" class="control-label"></label>
+                <input asp-for="SubName" class="form-control" id="SubName" />
+                <span asp-validation-for="SubName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SubAddress" class="control-label"></label>
+                <input asp-for="SubAddress" class="form-control" id="SubAddress" />
+                <span asp-validation-for="SubAddress" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SubContact" class="control-label"></label>
+                <input asp-for="SubContact" class="form-control" id="SubContact" />
+                <span asp-validation-for="SubContact" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.3/jquery.validate.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Add custom method to check for numbers
+            $.validator.addMethod("noNumbers", function (value, element) {
+                return this.optional(element) || /^[^0-9]*$/i.test(value);
+            }, "No numbers are allowed.");
+
+            $("#supplierForm").validate({
+                rules: {
+                    SubName: {
+                        required: true,
+                        noNumbers: true
+                    },
+                    SubAddress: {
+                        required: true,
+                        noNumbers: true
+                    },
+                    SubContact: {
+                        required: true,
+                        digits: true,
+                        minlength: 10,
+                        maxlength: 15
+                    }
+                },
+                messages: {
+                    SubName: {
+                        required: "Please enter the supplier name",
+                        noNumbers: "Supplier name cannot contain numbers"
+                    },
+                    SubAddress: {
+                        required: "Please enter the supplier address",
+                        noNumbers: "Supplier address cannot contain numbers"
+                    },
+                    SubContact: {
+                        required: "Please enter the supplier contact number",
+                        digits: "Please enter only digits",
+                        minlength: "Contact number must be at least 10 digits long",
+                        maxlength: "Contact number must not exceed 15 digits"
+                    }
+                },
+                errorElement: "div",
+                errorPlacement: function (error, element) {
+                    error.insertAfter(element);
+                },
+                submitHandler: function (form) {
+                    form.submit();
+                }
+            });
+        });
+    </script>
+}
