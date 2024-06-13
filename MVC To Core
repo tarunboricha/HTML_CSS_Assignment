@@ -1,0 +1,74 @@
+public ActionResult Search()
+{
+    return View();
+}
+
+[HttpPost]
+public ActionResult Search(CustomerDetail customerDetail)
+{
+    if (ModelState.IsValid)
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            client.BaseAddress = new Uri("https://localhost:44338/api/");
+            //HTTP GET
+            var responseTask = client.GetAsync($"CustomerDetails/Search?customerContact={customerDetail.CustomerContact}");  // PersonDetails is the WebApi controller name
+                                                                                                                             // wait for task to complete
+            responseTask.Wait();
+            // retrieve the result
+            var result = responseTask.Result;
+            // check the status code for success
+            if (result.IsSuccessStatusCode)
+            {
+                var readTask = result.Content.ReadAsStringAsync();
+                readTask.Wait();
+                customerDetail = JsonConvert.DeserializeObject<CustomerDetail>(readTask.Result);
+                var json = JsonConvert.SerializeObject(customerDetail);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var responseTask2 = client.PostAsync($"SalesHistory/Initialise?customerId={customerDetail.CustomerId}", content);
+                responseTask2.Wait();
+                var result2 = responseTask2.Result;
+                if (result2.IsSuccessStatusCode)
+                {
+                    var readTask2 = result2.Content.ReadAsStringAsync();
+                    readTask2.Wait();
+                    SalesHistory salesHistory = JsonConvert.DeserializeObject<SalesHistory>(readTask2.Result);
+
+                    return Redirect($"https://localhost:44335/BillingView/Index/{customerDetail.CustomerContact}/{salesHistory.SalesId}");
+                }
+            }
+            else //web api sent error response 
+            {
+                ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+            }
+        }
+    }
+    return RedirectToAction("Create");
+}
+
+public ActionResult Create()
+{
+    return View();
+}
+
+[HttpPost]
+public ActionResult Create(CustomerDetail customerDetail)
+{
+    using (var client = new HttpClient())
+    {
+        client.BaseAddress = new Uri("https://localhost:44338/api/");
+
+        var json = JsonConvert.SerializeObject(customerDetail);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var responseTask = client.PostAsync("CustomerDetails", content);
+        responseTask.Wait();
+        var result = responseTask.Result;
+        if (result.IsSuccessStatusCode)
+        {
+
+            return RedirectToAction("Index", "BillingView", new { custId = customerDetail.CustomerContact, orderId = 1 });
+        }
+        ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+    }
+    return View();
+}
