@@ -1,0 +1,65 @@
+[13/06, 17:24] CHHAVII AJMERA FAI: using System;
+using System.ComponentModel.DataAnnotations;
+
+public class CategoryNameValidationAttribute : ValidationAttribute
+{
+    protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+    {
+        var categoryName = value as string;
+        if (string.IsNullOrEmpty(categoryName))
+        {
+            return new ValidationResult("Category name cannot be empty.");
+        }
+
+        // Add custom validation logic here. For example:
+        // Check if category name is unique
+        var dbContext = (YourDbContext)validationContext.GetService(typeof(YourDbContext));
+        var existingCategory = dbContext.ProductCategories
+                                        .FirstOrDefault(c => c.CategoryName == categoryName);
+        if (existingCategory != null)
+        {
+            return new ValidationResult("Category name must be unique.");
+        }
+
+        return ValidationResult.Success;
+    }
+}
+[13/06, 17:24] CHHAVII AJMERA FAI: using System.Collections.Generic;
+
+public partial class ProductCategory
+{
+    public int CategoryId { get; set; }
+
+    [CategoryNameValidation]
+    public string CategoryName { get; set; } = null!;
+
+    public virtual ICollection<Product> Products { get; set; } = new List<Product>();
+}
+[13/06, 17:24] CHHAVII AJMERA FAI: // In Startup.cs or Program.cs
+services.AddDbContext<YourDbContext>(options =>
+    options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+[13/06, 17:24] CHHAVII AJMERA FAI: using Microsoft.AspNetCore.Mvc;
+
+public class ProductCategoryController : Controller
+{
+    private readonly YourDbContext _context;
+
+    public ProductCategoryController(YourDbContext context)
+    {
+        _context = context;
+    }
+
+    [HttpPost]
+    public IActionResult Create(ProductCategory productCategory)
+    {
+        if (ModelState.IsValid)
+        {
+            _context.Add(productCategory);
+            _context.SaveChanges();
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Return the view with validation errors
+        return View(productCategory);
+    }
+}
