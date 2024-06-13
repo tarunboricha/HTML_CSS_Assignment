@@ -186,4 +186,8 @@ Use Razor syntax to show/hide UI elements based on roles.
 
 ### Conclusion
 
+
+System.InvalidOperationException: 'An exception has been raised that is likely due to a transient failure. Consider enabling transient error resiliency by adding 'EnableRetryOnFailure' to the 'UseSqlServer' call.'
+
+
 This setup ensures that your ASP.NET Core MVC application supports login functionality with role-based access control. You can now manage `Admin` and `Clerk` roles, restrict access to specific controllers and views based on these roles, and handle unauthorized access attempts gracefully.
