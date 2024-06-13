@@ -1,0 +1,184 @@
+public class SupplierDetailsController : Controller
+{
+    private readonly HttpClient _httpClient;
+
+    public SupplierDetailsController(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var response = await _httpClient.GetAsync("api/SupplierDetails");
+        response.EnsureSuccessStatusCode();
+
+        var suppliers = await response.Content.ReadAsAsync<IEnumerable<SupplierDetail>>();
+        return View(suppliers);
+    }
+
+    public async Task<IActionResult> Details(int id)
+    {
+        var response = await _httpClient.GetAsync($"api/SupplierDetails/{id}");
+        response.EnsureSuccessStatusCode();
+
+        var supplier = await response.Content.ReadAsAsync<SupplierDetail>();
+        return View(supplier);
+    }
+
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(SupplierDetail supplierDetail)
+    {
+        if (ModelState.IsValid)
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/SupplierDetails", supplierDetail);
+            response.EnsureSuccessStatusCode();
+
+            return RedirectToAction(nameof(Index));
+        }
+        return View(supplierDetail);
+    }
+
+    public async Task<IActionResult> Edit(int id)
+    {
+        var response = await _httpClient.GetAsync($"api/SupplierDetails/{id}");
+        response.EnsureSuccessStatusCode();
+
+        var supplier = await response.Content.ReadAsAsync<SupplierDetail>();
+        return View(supplier);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, SupplierDetail supplierDetail)
+    {
+        if (id != supplierDetail.SupId)
+        {
+            return BadRequest();
+        }
+
+        if (ModelState.IsValid)
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/SupplierDetails/{id}", supplierDetail);
+            response.EnsureSuccessStatusCode();
+
+            return RedirectToAction(nameof(Index));
+        }
+        return View(supplierDetail);
+    }
+
+    public async Task<IActionResult> Delete(int id)
+    {
+        var response = await _httpClient.GetAsync($"api/SupplierDetails/{id}");
+        response.EnsureSuccessStatusCode();
+
+        var supplier = await response.Content.ReadAsAsync<SupplierDetail>();
+        return View(supplier);
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var response = await _httpClient.DeleteAsync($"api/SupplierDetails/{id}");
+        response.EnsureSuccessStatusCode();
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> SuppliersByProductInventory()
+    {
+        var response = await _httpClient.GetAsync("api/SupplierDetails/ByProductInventory");
+        response.EnsureSuccessStatusCode();
+
+        var suppliers = await response.Content.ReadAsAsync<IEnumerable<SupplierDetail>>();
+        return View(suppliers);
+    }
+}
+
+
+
+
+
+
+
+@model IEnumerable<SupplierDetail>
+
+<h1>Supplier Details</h1>
+<p>
+    <a href="@Url.Action("Create")">Create New</a>
+</p>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Address</th>
+        <th>Contact</th>
+        <th>Actions</th>
+    </tr>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.SubName</td>
+            <td>@item.SubAddress</td>
+            <td>@item.SubContact</td>
+            <td>
+                <a href="@Url.Action("Edit", new { id = item.SupId })">Edit</a> |
+                <a href="@Url.Action("Details", new { id = item.SupId })">Details</a> |
+                <a href="@Url.Action("Delete", new { id = item.SupId })">Delete</a>
+            </td>
+        </tr>
+    }
+</table>
+
+
+
+@model SupplierDetail
+
+<h1>Create Supplier</h1>
+
+<form asp-action="Create">
+    <div class="form-group">
+        <label asp-for="SubName"></label>
+        <input asp-for="SubName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="SubAddress"></label>
+        <input asp-for="SubAddress" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="SubContact"></label>
+        <input asp-for="SubContact" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>
+
+
+
+
+
+
+@model SupplierDetail
+
+<h1>Edit Supplier</h1>
+
+<form asp-action="Edit">
+    <input type="hidden" asp-for="SupId" />
+    <div class="form-group">
+        <label asp-for="SubName"></label>
+        <input asp-for="SubName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="SubAddress"></label>
+        <input asp-for="SubAddress" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="SubContact"></label>
+        <input asp-for="SubContact" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn
+
