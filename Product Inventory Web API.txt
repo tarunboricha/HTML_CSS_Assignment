@@ -134,3 +134,15 @@ namespace YourNamespace.Controllers
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
+
+==========================================================================
+
+new { htmlAttributes = new { @class = "form-control", @id= "stocks", @required = "true" }
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var max = $('#stocks').val();
+        $('#stocks').attr('min', 0);
+        $('#stocks').attr('max', max);
+    });
+</script>
