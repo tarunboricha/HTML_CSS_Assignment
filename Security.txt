@@ -415,3 +415,69 @@ To integrate role-based security in your existing `Program.cs` setup, we need to
 3. Log in with different users and test the access to the `/Admin` route to verify role-based restrictions.
 
 This should give you a fully functional ASP.NET Core MVC application with role-based security.
+
+
+
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Threading.Tasks;
+
+public static class RoleInitializer
+{
+    public static async Task InitializeAsync(IApplicationBuilder app)
+    {
+        using var serviceScope = app.ApplicationServices.CreateScope();
+        var roleManager = serviceScope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = serviceScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        string[] roleNames = { "Admin", "Clerk" };
+        IdentityResult roleResult;
+
+        foreach (var roleName in roleNames)
+        {
+            var roleExist = await roleManager.RoleExistsAsync(roleName);
+            if (!roleExist)
+            {
+                roleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
+            }
+        }
+
+        var adminUser = new ApplicationUser
+        {
+            UserName = "admin@example.com",
+            Email = "admin@example.com"
+        };
+
+        string adminPassword = "Admin@123";
+        var user = await userManager.FindByEmailAsync("admin@example.com");
+
+        if (user == null)
+        {
+            var createAdminUser = await userManager.CreateAsync(adminUser, adminPassword);
+            if (createAdminUser.Succeeded)
+            {
+                await userManager.AddToRoleAsync(adminUser, "Admin");
+            }
+        }
+
+        var clerkUser = new ApplicationUser
+        {
+            UserName = "clerk@example.com",
+            Email = "clerk@example.com"
+        };
+
+        string clerkPassword = "Clerk@123";
+        var clerk = await userManager.FindByEmailAsync("clerk@example.com");
+
+        if (clerk == null)
+        {
+            var createClerkUser = await userManager.CreateAsync(clerkUser, clerkPassword);
+            if (createClerkUser.Succeeded)
+            {
+                await userManager.AddToRoleAsync(clerkUser, "Clerk");
+            }
+        }
+    }
+}
