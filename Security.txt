@@ -1,292 +1,187 @@
-Your `Program.cs` setup is almost complete for implementing login functionality with role-based authorization. Here are the detailed steps to ensure roles are properly set up and to configure authentication and authorization:
+Creating an ASP.NET Core MVC web application with role-based security involves several steps. Here is a comprehensive guide to help you through the process:
 
-### 1. Adding Role Management
+### Step 1: Setup Your Development Environment
 
-First, modify your `Program.cs` to create roles on startup.
+1. **Install Visual Studio 2022 or later**:
+   - Download and install the latest version of Visual Studio from [here](https://visualstudio.microsoft.com/).
+   - During installation, ensure to include the ".NET desktop development" and "ASP.NET and web development" workloads.
 
-#### Step 1: Update Program.cs
+2. **Install .NET Core SDK**:
+   - Download and install the latest .NET Core SDK from [here](https://dotnet.microsoft.com/download).
 
-```csharp
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using SportsStoreManagementSystem.CoreMVC.Data;
-using SportsStoreManagementSystem.DAL.Models;
-using System;
+### Step 2: Create a New ASP.NET Core MVC Project
 
-var builder = WebApplication.CreateBuilder(args);
+1. Open Visual Studio.
+2. Click on `Create a new project`.
+3. Select `ASP.NET Core Web App (Model-View-Controller)` and click `Next`.
+4. Configure your project by providing the Project Name, Location, and Solution Name. Click `Create`.
+5. Select the latest `.NET Core` version, ensure `Authentication Type` is set to `Individual Accounts`, and click `Create`.
 
-// Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+### Step 3: Configure Identity and Database
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
-builder.Services.AddControllersWithViews();
-builder.Services.AddHttpClient();
-builder.Services.AddScoped<SportsDbContext, SportsDbContext>();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseMigrationsEndPoint();
-}
-else
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-}
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-
-app.UseRouting();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages();
-
-// Create roles and admin user on startup
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    await CreateRoles(services);
-}
-
-app.Run();
-
-async Task CreateRoles(IServiceProvider serviceProvider)
-{
-    var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
-    string[] roleNames = { "Admin", "Clerk" };
-    IdentityResult roleResult;
-
-    foreach (var roleName in roleNames)
-    {
-        var roleExist = await roleManager.RoleExistsAsync(roleName);
-        if (!roleExist)
-        {
-            roleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
-        }
-    }
-
-    // Here you can create a user and assign roles to them
-    var adminUser = await userManager.FindByEmailAsync("admin@example.com");
-    if (adminUser == null)
-    {
-        var newUser = new IdentityUser
-        {
-            UserName = "admin@example.com",
-            Email = "admin@example.com"
-        };
-        var createUser = await userManager.CreateAsync(newUser, "Password123!");
-        if (createUser.Succeeded)
-        {
-            await userManager.AddToRoleAsync(newUser, "Admin");
-        }
-    }
-}
-```
-
-### 2. Protecting Routes with Roles
-
-You can now create controllers for `Admin` and `Clerk`, ensuring that they are protected by roles.
-
-#### Example: AdminController
-
-```csharp
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-
-[Authorize(Roles = "Admin")]
-public class AdminController : Controller
-{
-    public IActionResult Index()
-    {
-        return View();
-    }
-}
-```
-
-#### Example: ClerkController
-
-```csharp
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-
-[Authorize(Roles = "Clerk")]
-public class ClerkController : Controller
-{
-    public IActionResult Index()
-    {
-        return View();
-    }
-}
-```
-
-### 3. Handling Role-Based Access in Views
-
-Use Razor syntax to show/hide UI elements based on roles.
-
-#### Example: _Layout.cshtml
-
-```html
-@if (User.IsInRole("Admin"))
-{
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Index">Admin Dashboard</a>
-    </li>
-}
-
-@if (User.IsInRole("Clerk"))
-{
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Clerk" asp-action="Index">Clerk Dashboard</a>
-    </li>
-}
-```
-
-### 4. Custom Login and Access Denied Pages
-
-#### Access Denied Page
-
-1. **Create Access Denied View**
-
-   Create a view at `/Views/Account/AccessDenied.cshtml`.
-
-   ```html
-   @page
-   @model AccessDeniedModel
-
-   <h1>Access Denied</h1>
-   <p>You do not have permission to view this page.</p>
+1. Open `appsettings.json` and configure your database connection string:
+   ```json
+   "ConnectionStrings": {
+     "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=aspnet-YourAppName;Trusted_Connection=True;MultipleActiveResultSets=true"
+   }
    ```
 
-2. **Configure the Access Denied Path**
-
-   Ensure the access denied path is configured in `Program.cs`:
-
+2. Open `Startup.cs` and ensure the services are configured correctly:
    ```csharp
-   builder.Services.ConfigureApplicationCookie(options =>
+   public void ConfigureServices(IServiceCollection services)
    {
-       options.LoginPath = $"/Account/Login";
-       options.LogoutPath = $"/Account/Logout";
-       options.AccessDeniedPath = $"/Account/AccessDenied";
-   });
+       services.AddDbContext<ApplicationDbContext>(options =>
+           options.UseSqlServer(
+               Configuration.GetConnectionString("DefaultConnection")));
+       services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+           .AddRoles<IdentityRole>()
+           .AddEntityFrameworkStores<ApplicationDbContext>();
+       services.AddControllersWithViews();
+       services.AddRazorPages();
+   }
+
+   public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+   {
+       if (env.IsDevelopment())
+       {
+           app.UseDeveloperExceptionPage();
+           app.UseDatabaseErrorPage();
+       }
+       else
+       {
+           app.UseExceptionHandler("/Home/Error");
+           app.UseHsts();
+       }
+       app.UseHttpsRedirection();
+       app.UseStaticFiles();
+
+       app.UseRouting();
+
+       app.UseAuthentication();
+       app.UseAuthorization();
+
+       app.UseEndpoints(endpoints =>
+       {
+           endpoints.MapControllerRoute(
+               name: "default",
+               pattern: "{controller=Home}/{action=Index}/{id?}");
+           endpoints.MapRazorPages();
+       });
+   }
    ```
 
-### Conclusion
+### Step 4: Create and Apply Migrations
 
+1. Open the `Package Manager Console` from `Tools -> NuGet Package Manager -> Package Manager Console`.
+2. Run the following commands:
+   ```powershell
+   Add-Migration InitialCreate
+   Update-Database
+   ```
 
-System.InvalidOperationException: 'An exception has been raised that is likely due to a transient failure. Consider enabling transient error resiliency by adding 'EnableRetryOnFailure' to the 'UseSqlServer' call.'
+### Step 5: Seed Roles in the Database
 
+1. Create a new class `RoleInitializer` in the `Data` folder:
+   ```csharp
+   using Microsoft.AspNetCore.Identity;
+   using Microsoft.Extensions.DependencyInjection;
+   using System;
+   using System.Linq;
+   using System.Threading.Tasks;
 
-This setup ensures that your ASP.NET Core MVC application supports login functionality with role-based access control. You can now manage `Admin` and `Clerk` roles, restrict access to specific controllers and views based on these roles, and handle unauthorized access attempts gracefully.
+   public class RoleInitializer
+   {
+       public static async Task InitializeAsync(IServiceProvider serviceProvider)
+       {
+           var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+           string[] roleNames = { "Admin", "User" };
+           IdentityResult roleResult;
 
+           foreach (var roleName in roleNames)
+           {
+               var roleExist = await roleManager.RoleExistsAsync(roleName);
+               if (!roleExist)
+               {
+                   roleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
+               }
+           }
+       }
+   }
+   ```
 
+2. Update `Program.cs` to call the `RoleInitializer` during application startup:
+   ```csharp
+   public class Program
+   {
+       public static async Task Main(string[] args)
+       {
+           var host = CreateHostBuilder(args).Build();
 
+           using (var scope = host.Services.CreateScope())
+           {
+               var services = scope.ServiceProvider;
+               try
+               {
+                   await RoleInitializer.InitializeAsync(services);
+               }
+               catch (Exception ex)
+               {
+                   var logger = services.GetRequiredService<ILogger<Program>>();
+                   logger.LogError(ex, "An error occurred while seeding the database.");
+               }
+           }
 
+           await host.RunAsync();
+       }
 
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using SportsStoreManagementSystem.CoreMVC.Data;
-using SportsStoreManagementSystem.DAL.Models;
-using System;
+       public static IHostBuilder CreateHostBuilder(string[] args) =>
+           Host.CreateDefaultBuilder(args)
+               .ConfigureWebHostDefaults(webBuilder =>
+               {
+                   webBuilder.UseStartup<Startup>();
+               });
+   }
+   ```
 
-var builder = WebApplication.CreateBuilder(args);
+### Step 6: Create Role-Based Authorization Policies
 
-// Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString, sqlServerOptionsAction: sqlOptions =>
-    {
-        sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(30),
-            errorNumbersToAdd: null);
-    }));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+1. In the `Controllers` folder, create a new `AdminController`:
+   ```csharp
+   using Microsoft.AspNetCore.Authorization;
+   using Microsoft.AspNetCore.Mvc;
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
-builder.Services.AddControllersWithViews();
-builder.Services.AddHttpClient();
-builder.Services.AddScoped<SportsDbContext, SportsDbContext>();
+   [Authorize(Roles = "Admin")]
+   public class AdminController : Controller
+   {
+       public IActionResult Index()
+       {
+           return View();
+       }
+   }
+   ```
 
-var app = builder.Build();
+2. Create the `Index` view for the `AdminController` in `Views/Admin/Index.cshtml`:
+   ```html
+   @model IEnumerable<IdentityRole>
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseMigrationsEndPoint();
-}
-else
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-}
+   @{
+       ViewData["Title"] = "Admin Dashboard";
+   }
 
-app.UseHttpsRedirection();
-app.UseStaticFiles();
+   <h2>@ViewData["Title"]</h2>
+   ```
 
-app.UseRouting();
+3. Add the `Authorize` attribute to other controllers or actions as needed.
 
-app.UseAuthentication();
-app.UseAuthorization();
+### Step 7: Test the Application
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages();
+1. Run the application.
+2. Register a new user and confirm the email if necessary.
+3. Manually add the user to a role in the database or create a role management interface.
+4. Verify that role-based access is working as intended by trying to access restricted pages with different user roles.
 
-// Create roles and admin user on startup
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    await CreateRoles(services);
-}
+### Step 8: Optional - Role Management UI
 
-app.Run();
+For a more user-friendly way to manage roles, you can create views and controllers to handle role assignments.
 
-async Task CreateRoles(IServiceProvider serviceProvider)
-{
-    var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
-    string[] roleNames = { "Admin", "Clerk" };
-    IdentityResult roleResult;
-
-    foreach (var roleName in roleNames)
-    {
-        var roleExist = await roleManager.RoleExistsAsync(roleName);
-        if (!roleExist)
-        {
-            roleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
-        }
-    }
-
-    // Here you can create a user and assign roles to them
-    var adminUser = await userManager.FindByEmailAsync("admin@example.com");
-    if (adminUser == null)
-    {
-        var newUser = new IdentityUser
-        {
-            UserName = "admin@example.com",
-            Email = "admin@example.com"
-        };
-        var createUser = await userManager.CreateAsync(newUser, "Password123!");
-        if (createUser.Succeeded)
-        {
-            await userManager.AddToRoleAsync(newUser, "Admin");
-        }
-    }
-}
+This should provide a comprehensive guide to setting up an ASP.NET Core MVC web application with role-based security. Each step is essential to ensure the application is secure and roles are properly managed.
