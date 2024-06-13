@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - My ASP.NET Application</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        @RenderBody()
+    </div>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
+
+
+
+
+
+
+
+@model SupplierDetail
+
+<h1>Create Supplier</h1>
+
+<form id="createForm" asp-action="Create">
+    <div class="form-group">
+        <label asp-for="SubName"></label>
+        <input asp-for="SubName" class="form-control" />
+        <span asp-validation-for="SubName" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="SubAddress"></label>
+        <input asp-for="SubAddress" class="form-control" />
+        <span asp-validation-for="SubAddress" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="SubContact"></label>
+        <input asp-for="SubContact" class="form-control" />
+        <span asp-validation-for="SubContact" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $.validator.addMethod("noNumbers", function (value, element) {
+                return this.optional(element) || !/\d/.test(value);
+            }, "The field should not contain numbers.");
+
+            $("#createForm").validate({
+                rules: {
+                    SubName: {
+                        required: true,
+                        noNumbers: true
+                    },
+                    SubAddress: {
+                        required: true,
+                        noNumbers: true
+                    },
+                    SubContact: {
+                        required: true
+                    }
+                },
+                messages: {
+                    SubName: {
+                        required: "Please enter the supplier name",
+                        noNumbers: "Supplier name should not contain numbers"
+                    },
+                    SubAddress: {
+                        required: "Please enter the supplier address",
+                        noNumbers: "Supplier address should not contain numbers"
+                    },
+                    SubContact: {
+                        required: "Please enter the supplier contact"
+                    }
+                },
+                errorClass: "text-danger"
+            });
+        });
+    </script>
+}
+
+
+
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+public partial class SupplierDetail
+{
+    public int SupId { get; set; }
+
+    [Required(ErrorMessage = "Please enter the supplier name")]
+    public string SubName { get; set; } = null!;
+
+    [Required(ErrorMessage = "Please enter the supplier address")]
+    public string SubAddress { get; set; } = null!;
+
+    [Required(ErrorMessage = "Please enter the supplier contact")]
+    public string SubContact { get; set; } = null!;
+
+    public virtual ICollection<ProcurementDetail> ProcurementDetails { get; set; } = new List<ProcurementDetail>();
+
+    public virtual ICollection<ProductInventory> ProductInventories { get; set; } = new List<ProductInventory>();
+
+    public virtual ICollection<SalesItem> SalesItems { get; set; } = new List<SalesItem>();
+}
