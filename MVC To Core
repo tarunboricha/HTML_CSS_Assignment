@@ -72,3 +72,90 @@ public ActionResult Create(CustomerDetail customerDetail)
     }
     return View();
 }
+
+
+
+
+
+
+
+
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using WebApplication1_Test_Security.Models; // Adjust namespace as needed
+
+public class CustomerController : Controller
+{
+    private readonly HttpClient _httpClient;
+
+    public CustomerController(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
+
+    public IActionResult Search()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Search(CustomerDetail customerDetail)
+    {
+        if (ModelState.IsValid)
+        {
+            _httpClient.BaseAddress = new Uri("https://localhost:44338/api/");
+            
+            // HTTP GET
+            var response = await _httpClient.GetAsync($"CustomerDetails/Search?customerContact={customerDetail.CustomerContact}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadAsStringAsync();
+                customerDetail = JsonConvert.DeserializeObject<CustomerDetail>(result);
+                var json = JsonConvert.SerializeObject(customerDetail);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                var response2 = await _httpClient.PostAsync($"SalesHistory/Initialise?customerId={customerDetail.CustomerId}", content);
+                
+                if (response2.IsSuccessStatusCode)
+                {
+                    var result2 = await response2.Content.ReadAsStringAsync();
+                    SalesHistory salesHistory = JsonConvert.DeserializeObject<SalesHistory>(result2);
+
+                    return Redirect($"https://localhost:44335/BillingView/Index/{customerDetail.CustomerContact}/{salesHistory.SalesId}");
+                }
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+            }
+        }
+        return RedirectToAction("Create");
+    }
+
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create(CustomerDetail customerDetail)
+    {
+        _httpClient.BaseAddress = new Uri("https://localhost:44338/api/");
+
+        var json = JsonConvert.SerializeObject(customerDetail);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var response = await _httpClient.PostAsync("CustomerDetails", content);
+
+        if (response.IsSuccessStatusCode)
+        {
+            return RedirectToAction("Index", "BillingView", new { custId = customerDetail.CustomerContact, orderId = 1 });
+        }
+        
+        ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+        return View();
+    }
+}
