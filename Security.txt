@@ -240,3 +240,178 @@ app.MapControllerRoute(
 app.MapRazorPages();
 
 app.Run();
+
+
+
+
+
+
+
+To integrate role-based security in your existing `Program.cs` setup, we need to add roles initialization and modify the identity configuration slightly. Here’s how to extend your current setup:
+
+### Step 1: Add Roles to the Identity Configuration
+
+1. Modify your `Program.cs` to add roles to the identity setup:
+    ```csharp
+    using Microsoft.AspNetCore.Identity;
+    using Microsoft.EntityFrameworkCore;
+    using WebApplication1_Test_Security.Data;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Logging;
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Add services to the container.
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(connectionString));
+    builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+    builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+        .AddRoles<IdentityRole>() // Add this line to enable roles
+        .AddEntityFrameworkStores<ApplicationDbContext>();
+    builder.Services.AddControllersWithViews();
+
+    var app = builder.Build();
+
+    // Seed roles
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        try
+        {
+            var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+            await RoleInitializer.InitializeAsync(roleManager, userManager);
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "An error occurred while seeding the database.");
+        }
+    }
+
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseMigrationsEndPoint();
+    }
+    else
+    {
+        app.UseExceptionHandler("/Home/Error");
+        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+        app.UseHsts();
+    }
+
+    app.UseHttpsRedirection();
+    app.UseStaticFiles();
+
+    app.UseRouting();
+
+    app.UseAuthentication(); // Add this line to enable authentication
+    app.UseAuthorization();
+
+    app.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}");
+    app.MapRazorPages();
+
+    app.Run();
+    ```
+
+### Step 2: Role Initializer
+
+1. Create a new class `RoleInitializer.cs` in the `Data` folder:
+    ```csharp
+    using Microsoft.AspNetCore.Identity;
+    using System.Threading.Tasks;
+
+    public static class RoleInitializer
+    {
+        public static async Task InitializeAsync(RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager)
+        {
+            string[] roleNames = { "Admin", "User" };
+            IdentityResult roleResult;
+
+            foreach (var roleName in roleNames)
+            {
+                var roleExist = await roleManager.RoleExistsAsync(roleName);
+                if (!roleExist)
+                {
+                    roleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
+                }
+            }
+
+            // Here you can also seed a default user to the Admin role
+            string adminUserEmail = "admin@example.com";
+            string adminPassword = "Admin@123";
+
+            if (await userManager.FindByEmailAsync(adminUserEmail) == null)
+            {
+                IdentityUser user = new IdentityUser
+                {
+                    UserName = adminUserEmail,
+                    Email = adminUserEmail,
+                    EmailConfirmed = true
+                };
+                IdentityResult result = await userManager.CreateAsync(user, adminPassword);
+
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user, "Admin");
+                }
+            }
+        }
+    }
+    ```
+
+### Step 3: Protect Controllers with Roles
+
+1. In your `Controllers` folder, create an `AdminController.cs`:
+    ```csharp
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Mvc;
+
+    [Authorize(Roles = "Admin")]
+    public class AdminController : Controller
+    {
+        public IActionResult Index()
+        {
+            return View();
+        }
+    }
+    ```
+
+2. Create the `Index` view for the `AdminController` in `Views/Admin/Index.cshtml`:
+    ```html
+    @{
+        ViewData["Title"] = "Admin Dashboard";
+    }
+
+    <h2>@ViewData["Title"]</h2>
+    <p>Welcome to the Admin Dashboard!</p>
+    ```
+
+### Step 4: Update Views
+
+1. Ensure you have appropriate links and navigation to test role-based access:
+    ```html
+    <!-- Example in _Layout.cshtml -->
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Index">Admin</a>
+        </li>
+        <!-- Add other links as necessary -->
+    </ul>
+    ```
+
+### Step 5: Test the Application
+
+1. Run the application.
+2. Register a new user or use the seeded admin user credentials (admin@example.com / Admin@123).
+3. Log in with different users and test the access to the `/Admin` route to verify role-based restrictions.
+
+This should give you a fully functional ASP.NET Core MVC application with role-based security.
