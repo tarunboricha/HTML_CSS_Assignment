@@ -1,0 +1,276 @@
+To implement views in ASP.NET Core MVC for the `SupplierDetail` model, follow these steps:
+
+1. **Create the Controller**: First, create a controller for the `SupplierDetail` model.
+
+2. **Create the Views**: Generate views for listing, creating, editing, and deleting supplier details.
+
+### Step 1: Create the Controller
+
+Use the ASP.NET Core scaffolding tool to generate a controller with views for CRUD operations.
+
+1. **Open your terminal** or **Package Manager Console** in Visual Studio.
+2. Navigate to your project directory.
+3. Run the following command:
+
+```bash
+dotnet aspnet-codegenerator controller -name SupplierDetailsController -m SupplierDetail -dc ApplicationDbContext --relativeFolderPath Controllers --useDefaultLayout --referenceScriptLibraries
+```
+
+This command generates a `SupplierDetailsController` with views for CRUD operations (Create, Read, Update, Delete) using the `SupplierDetail` model and `ApplicationDbContext` as the database context.
+
+### Step 2: Create the Views
+
+The scaffolding tool will generate views under the `Views/SupplierDetails` folder. Here’s what each view might look like:
+
+#### Index.cshtml (List of Supplier Details)
+
+```csharp
+@model IEnumerable<YourNamespace.Models.SupplierDetail>
+
+@{
+    ViewData["Title"] = "Supplier Details";
+}
+
+<h1>Supplier Details</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.SupId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SubName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SubAddress)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SubContact)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.SupId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SubName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SubAddress)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SubContact)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.SupId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.SupId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.SupId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+```
+
+#### Create.cshtml (Create New Supplier)
+
+```csharp
+@model YourNamespace.Models.SupplierDetail
+
+@{
+    ViewData["Title"] = "Create Supplier";
+}
+
+<h1>Create Supplier</h1>
+
+<h4>SupplierDetail</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div class="form-group">
+                <label asp-for="SubName" class="control-label"></label>
+                <input asp-for="SubName" class="form-control" />
+                <span asp-validation-for="SubName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SubAddress" class="control-label"></label>
+                <input asp-for="SubAddress" class="form-control" />
+                <span asp-validation-for="SubAddress" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SubContact" class="control-label"></label>
+                <input asp-for="SubContact" class="form-control" />
+                <span asp-validation-for="SubContact" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+```
+
+#### Edit.cshtml (Edit Supplier)
+
+```csharp
+@model YourNamespace.Models.SupplierDetail
+
+@{
+    ViewData["Title"] = "Edit Supplier";
+}
+
+<h1>Edit Supplier</h1>
+
+<h4>SupplierDetail</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <input type="hidden" asp-for="SupId" />
+            <div class="form-group">
+                <label asp-for="SubName" class="control-label"></label>
+                <input asp-for="SubName" class="form-control" />
+                <span asp-validation-for="SubName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SubAddress" class="control-label"></label>
+                <input asp-for="SubAddress" class="form-control" />
+                <span asp-validation-for="SubAddress" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SubContact" class="control-label"></label>
+                <input asp-for="SubContact" class="form-control" />
+                <span asp-validation-for="SubContact" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+```
+
+#### Details.cshtml (View Supplier Details)
+
+```csharp
+@model YourNamespace.Models.SupplierDetail
+
+@{
+    ViewData["Title"] = "Supplier Details";
+}
+
+<h1>Supplier Details</h1>
+
+<div>
+    <h4>SupplierDetail</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.SupId)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.SupId)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.SubName)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.SubName)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.SubAddress)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.SubAddress)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.SubContact)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.SubContact)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model.SupId">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>
+```
+
+#### Delete.cshtml (Delete Supplier)
+
+```csharp
+@model YourNamespace.Models.SupplierDetail
+
+@{
+    ViewData["Title"] = "Delete Supplier";
+}
+
+<h1>Delete Supplier</h1>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>SupplierDetail</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.SupId)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.SupId)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.SubName)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.SubName)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.SubAddress)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.SubAddress)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.SubContact)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.SubContact)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="SupId" />
+        <input type="submit" value="Delete" class="btn btn-danger" /> |
+        <a asp-action="Index">Back to List</a>
+    </form>
+</div>
+```
+
+These views provide a basic structure for creating, editing, viewing, and deleting `SupplierDetail` records in an ASP.NET Core MVC application. Ensure to replace `YourNamespace.Models` with the actual namespace of your project where the `SupplierDetail` class resides.
