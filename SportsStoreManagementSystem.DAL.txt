@@ -1,0 +1,438 @@
+SportsStoreManagementSystem.DAL
+
+CustomerDetailsDAL
+------------------
+
+using Microsoft.EntityFrameworkCore;
+using SportsStoreManagementSystem.DAL.Models;
+using SportsStoreManagementSystem.Entities;
+
+namespace SportsStoreManagementSystem.DAL
+{
+    public class CustomerDetailsDAL
+    {
+        SportsDbContext db = new SportsDbContext();
+
+
+        public IEnumerable<CustomerDetail> GetCustomerDetailsDAL()
+        {
+            return db.CustomerDetails.ToList();
+        }
+
+
+        public CustomerDetail GetCustomerDetailDAL(int id)
+        {
+            return db.CustomerDetails.Find(id);
+        }
+
+        public void AddCustomerDetailDAL(CustomerDetail customerDetail)
+        {
+            db.CustomerDetails.Add(customerDetail);
+            db.SaveChanges();
+        }
+
+        public SportsStoreEnum EditCustomerDetailDAL(int id, CustomerDetail customerDetail)
+        {
+            if (id != customerDetail.CustomerId)
+            {
+                return SportsStoreEnum.BadRequest;
+            }
+
+            db.Entry(customerDetail).State = EntityState.Modified;
+
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!CustomerDetailExists(id))
+                {
+                    return SportsStoreEnum.NotFound;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return SportsStoreEnum.NoContent;
+        }
+        public CustomerDetail GetCustomerByContactDAL(string contact)
+        {
+            var customerDetail =  db.CustomerDetails.FirstOrDefault(c => c.CustomerContact == contact);
+            return customerDetail;
+        }
+        private bool CustomerDetailExists(int id)
+        {
+            return db.CustomerDetails.Any(e => e.CustomerId == id);
+        }
+
+    }
+}
+
+---------------------
+ProcurementDetailsDAL
+---------------------
+
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using SportsStoreManagementSystem.DAL.Models;
+using SportsStoreManagementSystem.Entities;
+
+namespace SportsStoreManagementSystem.DAL
+{
+    public class ProcurementDetailsDAL
+    {
+        readonly SportsDbContext db = new SportsDbContext();
+
+        public IEnumerable<ProcurementDetail> GetAllProcurementDetailsDAL()
+        {
+            return db.ProcurementDetails
+                                 .Include(pd => pd.Product)
+                                 .Include(pd => pd.Sup)
+                                 .ToList();
+        }
+
+        public bool AddProcurementDetailDAL(ProcurementDetail procurementDetail)
+        {
+            int? Price = Convert.ToInt32(GetProductPrice(procurementDetail.ProductId));
+            procurementDetail.TotalPrice = procurementDetail.Qty * Price;
+
+            db.ProcurementDetails.Add(procurementDetail);
+            int noOfRowsAffected = db.SaveChanges();
+            if (noOfRowsAffected > 0)
+            {
+                UpdateInventory(procurementDetail);
+                return true;
+            }
+            else
+                return false; 
+        }
+
+        private int? GetProductPrice(int id)
+        {
+            Product? productDetail = db.Products.Find(id);
+            if (productDetail == null)
+            {
+                return null;
+            }
+            else
+            {
+                return productDetail.Price;
+            }
+        }
+
+        private void UpdateInventory(ProcurementDetail procurementDetail)
+        {
+            var inventory = new ProductInventory
+            {
+                SupId = Convert.ToInt32(procurementDetail.SupId), //Since Allowed Null is On in Proc.SupId
+                ProductId = Convert.ToInt32(procurementDetail.ProductId), //Since Allowed Null is On in Proc.SupId
+                Stocks = procurementDetail.Qty
+            };
+
+            var existing = db.ProductInventories.FirstOrDefault(x => x.ProductId == inventory.ProductId && x.SupId == inventory.SupId);
+
+            if (existing != null)
+            {
+                existing.Stocks += inventory.Stocks;
+                db.Entry(existing).State = EntityState.Modified;
+                db.SaveChanges();
+            }
+            else
+            {
+                db.ProductInventories.Add(inventory);
+                db.SaveChanges();
+            }
+        }
+    }
+}
+
+------------------
+ProductCategoryDAL
+------------------
+
+using Microsoft.EntityFrameworkCore;
+using SportsStoreManagementSystem.DAL.Models;
+using SportsStoreManagementSystem.Entities;
+
+namespace SportsStoreManagementSystem.DAL
+{
+    public class ProductCategoryDAL
+    {
+        readonly SportsDbContext db = new SportsDbContext();
+
+        public IEnumerable<ProductCategory> GetAllProductCategoriesDAL()
+        {
+            return db.ProductCategories.ToList();
+        }
+
+        public bool AddProductCategoryDAL(ProductCategory productCategory)
+        {
+            if (ProductInventoryExists(productCategory.CategoryName))
+            {
+                return false;
+            }
+            db.ProductCategories.Add(productCategory);
+            db.SaveChanges();
+            return true;
+        }
+
+        private bool ProductInventoryExists(string catName)
+        {
+            return db.ProductCategories.Any(e => e.CategoryName == catName);
+        }
+    }
+}
+
+-----------
+ProductsDAL
+-----------
+
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using SportsStoreManagementSystem.DAL.Models;
+using SportsStoreManagementSystem.Entities;
+
+namespace SportsStoreManagementSystem.DAL
+{
+    public class ProductsDAL
+    {
+        readonly SportsDbContext db = new SportsDbContext();
+
+        public IEnumerable<Product> GetProductsDAL()
+        {
+            return db.Products
+                .Include(p => p.ProcurementDetails)
+                .Include(p => p.ProductInventories)
+                .Include(p => p.SalesItems)
+                .ToList();
+        }
+
+        public Product GetProductDAL(int id)
+        {
+            var product = db.Products
+                .Include(p => p.ProcurementDetails)
+                .Include(p => p.ProductInventories)
+                .Include(p => p.SalesItems)
+                .FirstOrDefault(p => p.ProductId == id);
+
+            return product;
+        }
+
+        public bool PostProductDAL(Product product)
+        {
+            db.Products.Add(product);
+            int noOfRowsAffected = db.SaveChanges();
+            if (noOfRowsAffected > 0)
+                return true;
+            else
+                return false;
+        }
+
+        public SportsStoreEnum EditProductDAL(int id, Product product)
+        {
+            if (id != product.ProductId)
+            {
+                return SportsStoreEnum.BadRequest;
+            }
+
+            db.Entry(product).State = EntityState.Modified;
+
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProductExistsDAL(id))
+                {
+                    return SportsStoreEnum.NotFound;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return SportsStoreEnum.NoContent;
+        }
+
+        private bool ProductExistsDAL(int id)
+        {
+            return db.Products.Any(p => p.ProductId == id);
+        }
+
+        public IEnumerable<Product> GetProductsByCategoryInInventoryDAL(int categoryId)
+        {
+            var products = from P in db.Products
+                           join
+                           I in db.ProductInventories
+                           on
+                           P.ProductId equals I.ProductId
+                           where P.CategoryId == categoryId
+                           select P;
+
+            return products.ToList();
+        }
+
+        public IEnumerable<Product> GetProductsBySupplierDAL(int supplierId)
+        {
+            var products = db.Products
+            .Include(p => p.ProductInventories)
+            .Include(p => p.ProcurementDetails)
+            .Where(p => p.ProcurementDetails.Any(pd => pd.SupId == supplierId) && p.ProductInventories.Any(pi => pi.Stocks > 0))
+            .ToList();
+
+            return products.ToList();
+        }
+    }
+}
+---------------
+SalesHistoryDAL
+---------------
+
+using Microsoft.EntityFrameworkCore;
+using SportsStoreManagementSystem.DAL.Models;
+using SportsStoreManagementSystem.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.DAL
+{
+    public class SalesHistoryDAL
+    {
+        SportsDbContext db = new SportsDbContext();
+
+        public IEnumerable<SalesHistory> GetSalesHistoryDetailsDAL() { 
+        
+            return db.SalesHistories.ToList();
+        }
+
+        public SalesHistory GetSalesHistoryDAL(int id)
+        {
+           return db.SalesHistories.Find(id);
+        }
+
+        public  void AddSalesHistoryDAL(SalesHistory salesHistory)
+        {
+            db.SalesHistories.Add(salesHistory);
+            db.SaveChanges();
+
+        }
+
+        public SportsStoreEnum EditSalesHistoryDAL(int id, SalesHistory salesHistory)
+        {
+            if (id != salesHistory.SalesId)
+            {
+                return SportsStoreEnum.BadRequest;
+            }
+            db.Entry(salesHistory).State = EntityState.Modified;
+
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!SalesHistoryExists(id))
+                {
+                    return SportsStoreEnum.NotFound;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return SportsStoreEnum.NoContent;
+        }
+
+        private bool SalesHistoryExists(int id)
+        {
+            return db.SalesHistories.Any(e => e.SalesId == id);
+        }
+
+    }
+}
+
+-----------------
+SupplierDetailsDAL
+-----------------
+
+using Microsoft.EntityFrameworkCore;
+using SportsStoreManagementSystem.DAL.Models;
+using SportsStoreManagementSystem.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.DAL
+{
+    public class SupplierDetailsDAL
+    {
+        SportsDbContext db = new SportsDbContext();
+
+        public IEnumerable<SupplierDetail> GetSupplierDetailsDAL()
+        {
+            return  db.SupplierDetails.ToList();
+        }
+
+        public SupplierDetail GetSupplierDetailDAL(int id)
+        {
+            return db.SupplierDetails.Find(id);
+        }
+
+        public void AddSupplierDetailDAL(SupplierDetail supplierDetail)
+        {
+            db.SupplierDetails.Add(supplierDetail);
+            db.SaveChanges();
+        }
+
+        public  SportsStoreEnum EditSupplierDetailDAL(SupplierDetail supplierDetail)
+        {
+          
+            db.Entry(supplierDetail).State = EntityState.Modified;
+
+            try
+            {
+                db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!SupplierDetailExists(supplierDetail.SupId))
+                {
+                    return SportsStoreEnum.NotFound;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return SportsStoreEnum.NoContent;
+        }
+
+        public IEnumerable<SupplierDetail> GetSupplierDetailsByProductIdDAL(int productId)
+        {
+            var suppliers = from S in db.SupplierDetails
+                            join
+                            I in db.ProductInventories
+                            on
+                            S.SupId equals I.SupId
+                            where I.ProductId == productId
+                            select S;
+
+            return suppliers.ToList();
+        }
+
+        private bool SupplierDetailExists(int id)
+        {
+            return db.SupplierDetails.Any(e => e.SupId == id);
+        }
+
+    }
+}
