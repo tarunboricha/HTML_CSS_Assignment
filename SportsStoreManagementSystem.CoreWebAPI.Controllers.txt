@@ -1,0 +1,725 @@
+SportsStoreManagementSystem.CoreWebAPI.Controllers
+
+CustomerDetailsController
+-------------------------
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SportsStoreManagementSystem.Entities;
+using SportsStoreManagementSystem.BL;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.CoreWebAPI.Controllers
+{
+
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CustomerDetailsController : ControllerBase
+    {
+        //private readonly SportsDbContext _context;
+
+        //public CustomerDetailsController(SportsDbContext context)
+        //{
+        //    _context = context;
+        //}
+
+        // GET: api/CustomerDetails
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<CustomerDetail>>> GetCustomerDetails()
+        {
+            CustomerDetailsBL customerDetails = new CustomerDetailsBL();
+            return Ok(customerDetails.GetCustomerDetailsBL());
+        }
+
+        // GET: api/CustomerDetails/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<CustomerDetail>> GetCustomerDetail(int id)
+        {
+            CustomerDetailsBL customerDetails = new CustomerDetailsBL();
+
+            var customerDetail = customerDetails.GetCustomerDetailBL(id);
+
+            if (customerDetail == null)
+            {
+                return NotFound();
+            }
+
+            return customerDetail;
+        }
+
+        // POST: api/CustomerDetails
+        [HttpPost]
+        public async Task<ActionResult<CustomerDetail>> PostCustomerDetail(CustomerDetail customerDetail)
+        {
+            CustomerDetailsBL customerDetails = new CustomerDetailsBL();
+            customerDetails.AddCustomerDetailBL(customerDetail);
+
+            return CreatedAtAction("GetCustomerDetail", new { id = customerDetail.CustomerId }, customerDetail);
+        }
+
+        // PUT: api/CustomerDetails/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCustomerDetail(int id, CustomerDetail customerDetail)
+        {
+            CustomerDetailsBL customerDetails = new CustomerDetailsBL();
+            SportsStoreEnum sportsStoreEnum = customerDetails.EditCustomerDetailBL(id, customerDetail);
+
+            if (sportsStoreEnum == SportsStoreEnum.BadRequest)
+            {
+                return BadRequest();
+            }
+            if (sportsStoreEnum == SportsStoreEnum.NotFound)
+            {
+                return NotFound();
+            }
+            return NoContent();
+        }
+
+        [HttpGet("contact/{contact}")]
+        public async Task<ActionResult<CustomerDetail>> GetCustomerByContact(string contact)
+        {
+            CustomerDetailsBL customerDetails = new CustomerDetailsBL();
+
+            var customerDetail = customerDetails.GetCustomerByContactBL(contact);
+            if (customerDetail == null)
+            {
+                return NotFound();
+            }
+            return customerDetail;
+        }
+    }
+}
+
+----------------------------
+ProcurementDetailsController
+----------------------------
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using SportsStoreManagementSystem.BL;
+using SportsStoreManagementSystem.Entities;
+
+namespace SportsStoreManagementSystem.CoreWebAPI.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProcurementDetailsController : ControllerBase
+    {
+        readonly ProcurementDetailsBL procureObj = new ProcurementDetailsBL();
+
+        //private readonly SportsDbContext _context;
+
+        //public ProcurementDetailsController(SportsDbContext context)
+        //{
+        //    _context = context;
+        //}
+
+        // GET: api/ProcurementDetails
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProcurementDetail>>> GetAllProcurementDetails()
+        {
+            return Ok(procureObj.GetAllProcurementDetailsBL());
+        }
+
+        // POST: api/ProcurementDetails
+        [HttpPost]
+        public async Task<ActionResult<ProcurementDetail>> PostProcurementDetail(ProcurementDetail procurementDetail)
+        {
+            bool procureAdded = procureObj.AddProcurementDetailBL(procurementDetail);
+            if (procureAdded)
+                return Ok();
+            else
+                return BadRequest();
+            //return CreatedAtAction("GetAllProcurementDetails", new { id = procurementDetail.ProcurementId }, procurementDetail);
+        }
+    }
+}
+
+-------------------------
+ProductCategoryController
+-------------------------
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using SportsStoreManagementSystem.BL;
+using SportsStoreManagementSystem.Entities;
+
+namespace SportsStoreManagementSystem.CoreWebAPI.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductCategoryController : ControllerBase
+    {
+        private readonly ProductCategoryBL productCategoryObj = new ProductCategoryBL();
+
+        //private readonly SportsDbContext _context;
+
+        //public ProductCategoryController(SportsDbContext context)
+        //{
+        //    _context = context;
+        //}
+
+        // GET: api/ProductCategories
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProductCategory>>> GetAllProductCategories()
+        {
+            return Ok(productCategoryObj.GetAllProductCategoriesBL());
+        }
+
+        // POST: api/ProductCategories
+        [HttpPost]
+        public async Task<ActionResult<ProductCategory>> PostProductCategory(ProductCategory productCategory)
+        {
+            bool categoryAdded = productCategoryObj.AddProductCategoryBL(productCategory);
+            if (categoryAdded)
+                return Ok();
+            else
+                return BadRequest();
+            //return CreatedAtAction("GetAllProductCategories", new { id = productCategory.CategoryId }, productCategory);
+        }
+    }
+}
+
+--------------------------
+ProductInventoryController
+--------------------------
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using SportsStoreManagementSystem.Entities;
+using SportsStoreManagementSystem.DAL.Models;
+
+namespace SportsStoreManagementSystem.WebAPI.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductInventoryController : ControllerBase
+    {
+        private readonly SportsDbContext _context;
+
+        public ProductInventoryController(SportsDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/ProductInventory
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProductInventory>>> GetProductInventoryDetails()
+        {
+            return await _context.ProductInventories
+                                 .Include(pi => pi.Product)
+                                 .Include(pi => pi.Sup)
+                                 .ToListAsync();
+        }
+
+        // GET: api/ProductInventory/SupId/ProductId
+        [HttpGet("{SupId}/{ProductId}")]
+        public async Task<ActionResult<ProductInventory>> GetCurrentProductInventoryDetail(int SupId, int ProductId)
+        {
+            var productInventory = await _context.ProductInventories
+                                                 .Include(pi => pi.Product)
+                                                 .Include(pi => pi.Sup)
+                                                 .FirstOrDefaultAsync(pi => pi.SupId == SupId && pi.ProductId == ProductId);
+
+            if (productInventory == null)
+            {
+                return NotFound();
+            }
+
+            return productInventory;
+        }
+
+        // PUT: api/ProductInventory/SupId/ProductId
+        [HttpPut]
+        public async Task<IActionResult> PutProductInventory(ProductInventory productInventory)
+        {
+            _context.Entry(productInventory).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProductInventoryExists(productInventory.SupId, productInventory.ProductId))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        private bool ProductInventoryExists(int SupId, int ProductId)
+        {
+            return _context.ProductInventories.Any(e => e.SupId == SupId && e.ProductId == ProductId);
+        }
+    }
+}
+
+
+------------------
+ProductsController
+------------------
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SportsStoreManagementSystem.Entities;
+using SportsStoreManagementSystem.BL;
+using Microsoft.Extensions.FileProviders;
+
+namespace SportsStoreManagementSystem.CoreWebAPI.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductsController : ControllerBase
+    {
+        readonly ProductsBL productsObj = new ProductsBL();
+        //private readonly SportsDbContext _context;
+
+        //public ProductsController(SportsDbContext context)
+        //{
+        //    _context = context;
+        //}
+
+        // GET: api/Products
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        {
+            return Ok(productsObj.GetProductsBL());
+        }
+
+        // GET: api/Products/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Product>> GetProduct(int id)
+        {
+            var product = productsObj.GetProductBL(id);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
+            return product;
+        }
+
+        // POST: api/Products
+        [HttpPost]
+        public async Task<ActionResult<Product>> PostProduct(Product product)
+        {
+            bool productAdded = productsObj.PostProductBL(product);
+            if(productAdded)
+            {
+                return Ok();
+            }
+            return BadRequest();
+
+            //return CreatedAtAction("GetProduct", new { id = product.ProductId }, product);
+        }
+
+        // PUT: api/Products/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutProduct(int id, Product product)
+        {
+            SportsStoreEnum sportsStoreEnum = productsObj.EditProductsBL(id, product);
+            
+            if (sportsStoreEnum == SportsStoreEnum.BadRequest)
+            {
+                return BadRequest();
+            }
+            if (sportsStoreEnum == SportsStoreEnum.NotFound)
+            {
+                return NotFound();
+            }
+            return NoContent();
+        }
+
+        [HttpGet("byCategory/{categoryId}")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetProductsByCategoryInInventory(int categoryId)
+        {
+            var products = productsObj.GetProductsByCategoryInInventoryBL(categoryId);
+
+            if (products == null)
+            {
+                return NotFound();
+            }
+            return Ok(products);
+        }
+        [HttpGet("bySupplier/{supplierId}")]
+        public async Task<ActionResult<IEnumerable<Product>>> GetProductsBySupplier(int supplierId)
+        {
+            var products = productsObj.GetProductsBySupplierBL(supplierId);
+
+            if (!products.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(products);
+        }
+    }
+}
+
+------------------------
+SalesHistoriesController
+------------------------
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SportsStoreManagementSystem.Entities;
+using SportsStoreManagementSystem.BL;
+
+namespace SportsStoreManagementSystem.CoreWebAPI.Controllers
+{
+
+    [Route("api/[controller]")]
+    [ApiController]
+    public class SalesHistoriesController : ControllerBase
+    {
+        //private readonly SportsDbContext _context;
+
+        //public SalesHistoriesController(SportsDbContext context)
+        //{
+        //    _context = context;
+        //}
+
+        // GET: api/SalesHistories
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<SalesHistory>>> GetSalesHistories()
+        {
+            SalesHistoryBL salesHistory = new SalesHistoryBL();
+            return Ok(salesHistory.GetSalesHistoryDetailsBL());
+        }
+
+        // GET: api/SalesHistories/5
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<SalesHistory>> GetSalesHistory(int id)
+        {
+            SalesHistoryBL salesHistory = new SalesHistoryBL();
+            var salesbyId = salesHistory.GetSalesHistoryBL(id);
+
+            if (salesbyId == null)
+            {
+                return NotFound();
+            }
+
+            return salesbyId;
+        }
+
+        // POST: api/SalesHistories
+        [HttpPost]
+        public async Task<ActionResult<SalesHistory>> PostSalesHistory(SalesHistory salesHistory)
+        {
+            SalesHistoryBL sales = new SalesHistoryBL();
+            sales.AddSalesHistoryBL(salesHistory);
+
+
+
+            return CreatedAtAction("GetSalesHistory", new { id = salesHistory.SalesId }, salesHistory);
+        }
+
+        // PUT: api/SalesHistories/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutSalesHistory(int id, SalesHistory salesHistory)
+        {
+            SalesHistoryBL sales = new SalesHistoryBL();
+
+            SportsStoreEnum salesEdit = sales.EditSalesHistoryBL(id, salesHistory);
+
+            if (salesEdit == SportsStoreEnum.BadRequest)
+            {
+                return BadRequest();
+            }
+
+            if (salesEdit == SportsStoreEnum.NotFound)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+    }
+}
+
+--------------------
+SalesItemsController
+--------------------
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SportsStoreManagementSystem.Entities;
+using SportsStoreManagementSystem.DAL.Models;
+
+namespace SportsStoreManagementSystem.CoreWebAPI.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class SalesItemsController : ControllerBase
+    {
+        private readonly SportsDbContext _context;
+
+        public SalesItemsController(SportsDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/SalesItem/{salesId}/{productId}
+        [HttpGet("{salesId}/{productId}")]
+        public async Task<ActionResult<SalesItem>> GetSalesItemBySalesIdAndProductId(int salesId, int productId)
+        {
+            var salesItem = await _context.SalesItems
+                                          .FirstOrDefaultAsync(si => si.SalesId == salesId && si.ProductId == productId);
+
+            if (salesItem == null)
+            {
+                return NotFound();
+            }
+
+            return salesItem;
+        }
+
+        // GET: api/SalesItem/SalesId/{salesId}
+        [HttpGet("SalesId/{salesId}")]
+        public async Task<ActionResult<IEnumerable<SalesItem>>> GetSalesItemBySalesId(int salesId)
+        {
+            var salesItems = await _context.SalesItems
+                                           .Include(si => si.Product)
+                                           .Where(si => si.SalesId == salesId)
+                                           .ToListAsync();
+
+            if (salesItems == null || !salesItems.Any())
+            {
+                return NotFound();
+            }
+
+            return salesItems;
+        }
+
+        // POST: api/SalesItem
+        //[HttpPost]
+        //public async Task<ActionResult<SalesItem>> PostSalesItem(SalesItem salesItem)
+        //{
+        //    _context.SalesItems.Add(salesItem);
+        //    await _context.SaveChangesAsync();
+
+        //    return CreatedAtAction("GetSalesItemBySalesIdAndProductId", new 
+        //    { salesId = salesItem.SalesId, productId = salesItem.ProductId }, salesItem);
+        //}
+
+        [HttpPost("Return")]
+        public async Task<IActionResult> ReturnSalesItems([FromBody] List<ReturnItemDto> returnItemsDto)
+        {
+            if (returnItemsDto == null || !returnItemsDto.Any())
+            {
+                return BadRequest("return items list is empty.");
+            }
+
+            foreach (var item in returnItemsDto)
+            {
+                SalesItem salesItem = _context.SalesItems.Where(si => si.SalesId == item.SalesId && si.ProductId == item.ProductId).FirstOrDefault();
+                ProductInventory productInventory = _context.ProductInventories.Where(pi => pi.ProductId == item.ProductId && pi.SupId == item.SupId).FirstOrDefault();
+
+                salesItem.Qty -= item.Qty;
+                productInventory.Stocks += item.Qty;
+            }
+
+            _context.SaveChanges();
+            return Ok(returnItemsDto[0].SalesId);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateSalesItems([FromBody] List<SalesItemDto> salesItemsDto)
+        {
+            if (salesItemsDto == null || !salesItemsDto.Any())
+            {
+                return BadRequest("Sales items list is empty.");
+            }
+
+            SalesHistory newOrder = new SalesHistory
+            {
+                CustomerId = salesItemsDto[0].CustomerId,
+                PurchaseDate = DateTime.Now,
+                BillTotal = 0
+            };
+
+            await _context.SalesHistories.AddAsync(newOrder);
+            await _context.SaveChangesAsync();
+
+            foreach (var item in salesItemsDto)
+            {
+                newOrder.BillTotal += item.PricePerItem * item.Qty;
+                var orderDetail = new SalesItem
+                {
+                    CustomerId = Convert.ToInt32(newOrder.CustomerId),
+                    SalesId = newOrder.SalesId,
+                    ProductId = item.ProductId,
+                    Qty = item.Qty,
+                    PricePerItem = item.PricePerItem,
+                    SupId = item.SupId
+                };
+                await _context.AddAsync(orderDetail);
+                ProductInventory inventory = await _context.ProductInventories.Where(pi => pi.ProductId == item.ProductId && pi.SupId == item.SupId).FirstOrDefaultAsync();
+                if (inventory != null)
+                {
+                    inventory.Stocks = inventory.Stocks - item.Qty;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(newOrder.SalesId);
+        }
+    }
+}
+
+-------------------------
+SupplierDetailsController
+-------------------------
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SportsStoreManagementSystem.BL;
+using SportsStoreManagementSystem.Entities;
+
+namespace SportsStoreManagementSystem.CoreWebAPI.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class SupplierDetailsController : ControllerBase
+    {
+        //private readonly SportsDbContext _context;
+
+        //public SupplierDetailsController(SportsDbContext context)
+        //{
+        //    _context = context;
+        //}
+
+        // GET: api/SupplierDetails
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<SupplierDetail>>> GetSupplierDetails()
+        {
+            SupplierDetailsBL supplierDetails = new SupplierDetailsBL();
+
+            return Ok(supplierDetails.GetSupplierDetailsBL());
+        }
+
+        // GET: api/SupplierDetails/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<SupplierDetail>> GetSupplierDetail(int id)
+        {
+            SupplierDetailsBL supplierDetails = new SupplierDetailsBL();
+
+            var supplierDetail =  supplierDetails.GetSupplierDetailBL(id);
+
+            if (supplierDetail == null)
+            {
+                return NotFound();
+            }
+
+            return supplierDetail;
+        }
+
+        // POST: api/SupplierDetails
+        [HttpPost]
+        public async Task<ActionResult<SupplierDetail>> PostSupplierDetail(SupplierDetail supplierDetail)
+        {
+            SupplierDetailsBL supplierDetails = new SupplierDetailsBL();
+
+            supplierDetails.AddSupplierDetailBL(supplierDetail);
+
+
+            return CreatedAtAction("GetSupplierDetail", new { id = supplierDetail.SupId }, supplierDetail);
+        }
+
+        // PUT: api/SupplierDetails/5
+        [HttpPut]
+        public async Task<IActionResult> PutSupplierDetail(SupplierDetail supplierDetail)
+        {
+            SupplierDetailsBL supplierDetails = new SupplierDetailsBL();
+            SportsStoreEnum sportsStoreEnum = supplierDetails.EditSupplierDetailBL(supplierDetail);
+
+            if(sportsStoreEnum == SportsStoreEnum.NotFound)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+
+        }
+
+        [HttpGet("byProduct/{productId}")]
+        public async Task<ActionResult<IEnumerable<SupplierDetail>>> GetSupplierDetailsByProductId(int productId)
+        {
+
+            SupplierDetailsBL supplierDetails = new SupplierDetailsBL();
+
+
+
+            var suppliers = supplierDetails.GetSupplierDetailsByProductIdBL(productId);
+
+            if (!suppliers.Any())
+            {
+                return NotFound();
+            }
+
+            return suppliers.ToList();
+        }
+    }
+}
+
+----------------------------------------------------------
+Program.cs
+----------------------------------------------------------
+
+using Microsoft.EntityFrameworkCore;
+using SportsStoreManagementSystem.DAL.Models;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    });
+
+//builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddDbContext<SportsDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
+
