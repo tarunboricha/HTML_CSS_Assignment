@@ -1,0 +1,676 @@
+SportsStoreManagementSystem.CoreMVC.Controllers.txt
+
+---------------------------------------------------------
+
+namespace SportsStoreManagementSystem.CoreMVC.Controllers
+{
+[Authorize(Roles = "Clerk")]
+public class BillingController : Controller
+{
+    private readonly IHttpClientFactory _httpClientFactory;
+
+    public BillingController(IHttpClientFactory httpClientFactory)
+    {
+        _httpClientFactory = httpClientFactory;
+    }
+
+    public async Task<IActionResult> Index(string id)
+    {
+        var client = _httpClientFactory.CreateClient();
+
+        var customerResponse = await client.GetAsync($"https://localhost:7071/api/CustomerDetails/contact/{id}");
+        if (!customerResponse.IsSuccessStatusCode)
+        {
+            return NotFound("Customer not found");
+        }
+
+        var customerData = await customerResponse.Content.ReadAsStringAsync();
+        var customer = JsonConvert.DeserializeObject<CustomerDetail>(customerData);
+
+        var categoryResponse = await client.GetAsync("https://localhost:7071/api/ProductCategory");
+        if (!categoryResponse.IsSuccessStatusCode)
+        {
+            return StatusCode((int)categoryResponse.StatusCode, "Error fetching categories");
+        }
+
+        var categoryData = await categoryResponse.Content.ReadAsStringAsync();
+        var categories = JsonConvert.DeserializeObject<List<ProductCategory>>(categoryData);
+
+        var model = new BillingViewModel
+        {
+            Customer = customer,
+            Categories = categories
+        };
+
+        return View(model);
+    }
+
+    public ActionResult Search()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Search(CustomerDetail customerDetail)
+    {
+        var client = _httpClientFactory.CreateClient();
+
+        var customerResponse = await client.GetAsync($"https://localhost:7071/api/CustomerDetails/contact/{customerDetail.CustomerContact}");
+        if (!customerResponse.IsSuccessStatusCode)
+        {
+            return RedirectToAction("Create");
+        }
+
+        var customerData = await customerResponse.Content.ReadAsStringAsync();
+        var customer = JsonConvert.DeserializeObject<CustomerDetail>(customerData);
+        return RedirectToAction("Index", new { id = customer.CustomerContact });
+    }
+
+    public ActionResult Create()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create(CustomerDetail customerDetail)
+    {
+        if (ModelState.IsValid)
+        {
+            var client = _httpClientFactory.CreateClient();
+
+            var customerResponse = await client.PostAsJsonAsync("https://localhost:7071/api/CustomerDetails", customerDetail);
+
+            if (!customerResponse.IsSuccessStatusCode)
+            {
+                return StatusCode((int)customerResponse.StatusCode, "Customer already exists");
+            }
+
+            return RedirectToAction("Index", new { id = customerDetail.CustomerContact });
+        }
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetProductsByCategory(int categoryId)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetAsync($"https://localhost:7071/api/Products/byCategory/{categoryId}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Json(new { success = false, message = "Error fetching products" });
+        }
+
+        var data = await response.Content.ReadAsStringAsync();
+        var products = JsonConvert.DeserializeObject<List<Product>>(data);
+
+        if (products == null || !products.Any())
+        {
+            return Json(new { success = false, message = "No products found" });
+        }
+        return Json(new { success = true, products });
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetSuppliersByProductId(int productId)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetAsync($"https://localhost:7071/api/SupplierDetails/byProduct/{productId}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Json(new { success = false, message = "Error fetching suppliers" });
+        }
+
+        var data = await response.Content.ReadAsStringAsync();
+        var suppliers = JsonConvert.DeserializeObject<List<SupplierDetail>>(data);
+
+        if (suppliers == null || !suppliers.Any())
+        {
+            return Json(new { success = false, message = "No Suppliers found" });
+        }
+
+        return Json(suppliers);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetProductStocks(int productID, int supID)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetAsync($"https://localhost:7071/api/ProductInventory/{supID}/{productID}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Json(new { success = false, message = "Error fetching inventory" });
+        }
+
+        var data = await response.Content.ReadAsStringAsync();
+        var inventory = JsonConvert.DeserializeObject<ProductInventory>(data);
+
+        if (inventory == null)
+        {
+            return Json(new { success = false, message = "No Inventory found" });
+        }
+
+        return Json(inventory);
+    }
+
+    [HttpPost]
+    public async Task<JsonResult> Checkout([FromBody] List<SalesItemViewModel> items)
+    {
+        if (items == null || !items.Any())
+        {
+            return Json("No items to checkout");
+        }
+
+        var client = _httpClientFactory.CreateClient();
+        var content = new StringContent(JsonConvert.SerializeObject(items), System.Text.Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync("https://localhost:7071/api/SalesItems", content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Json((int)response.StatusCode, "Error placing order");
+        }
+
+        var salesId = await response.Content.ReadAsStringAsync(); // Assuming the salesId is returned as a string
+
+        return Json(salesId);
+    }
+
+    public async Task<IActionResult> BillSummary(int id)
+    {
+        var client = _httpClientFactory.CreateClient();
+
+        var response = await client.GetAsync($"https://localhost:7071/api/SalesItems/SalesId/{id}");
+        if (!response.IsSuccessStatusCode)
+        {
+            return NotFound("Sales record not found");
+        }
+
+        var data = await response.Content.ReadAsStringAsync();
+        var salesItems = JsonConvert.DeserializeObject<List<SalesItem>>(data);
+
+        return View(new BillSummaryViewModel
+        {
+            SalesId = id,
+            SalesItems = salesItems
+        });
+    }
+
+    public IActionResult Return()
+    {
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetOrderItems(int orderId)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.GetAsync($"https://localhost:7071/api/SalesItems/SalesId/{orderId}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Json(new { success = false, message = "Order not found" });
+        }
+
+        var data = await response.Content.ReadAsStringAsync();
+        var orderItems = JsonConvert.DeserializeObject<List<SalesItem>>(data);
+
+        return Json(new { success = true, orderItems });
+    }
+
+    [HttpPost]
+    public async Task<JsonResult> ReturnItems([FromBody] List<ReturnItemDto> items)
+    {
+        if (items == null || !items.Any())
+        {
+            return Json("No items to Return");
+        }
+
+        var client = _httpClientFactory.CreateClient();
+        var content = new StringContent(JsonConvert.SerializeObject(items), System.Text.Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync("https://localhost:7071/api/SalesItems/Return", content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Json((int)response.StatusCode, "Error returning order");
+        }
+
+        var salesId = await response.Content.ReadAsStringAsync(); // Assuming the salesId is returned as a string
+
+        return Json(salesId);
+    }
+  }
+}
+
+------------------------------------------
+using Microsoft.AspNetCore.Mvc;
+using SportsStoreManagementSystem.CoreMVC.Models;
+using System.Diagnostics;
+
+namespace SportsStoreManagementSystem.CoreMVC.Controllers
+{
+    public class HomeController : Controller
+    {
+        private readonly ILogger<HomeController> _logger;
+
+        public HomeController(ILogger<HomeController> logger)
+        {
+            _logger = logger;
+        }
+
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+    }
+}
+
+-------------------------------------------
+
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Newtonsoft.Json;
+using SportsStoreManagementSystem.Entities;
+
+namespace SportsStoreManagementSystem.CoreMVC.Controllers
+{
+    [Authorize(Roles = "Admin")]
+    public class ProcurementDetailsController : Controller
+    {
+        private readonly HttpClient _httpClient;
+
+        public ProcurementDetailsController(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var response = await _httpClient.GetAsync("https://localhost:7071/api/ProcurementDetails");
+            response.EnsureSuccessStatusCode();
+            var data = await response.Content.ReadAsStringAsync();
+            var procurement = JsonConvert.DeserializeObject<List<ProcurementDetail>>(data) as IEnumerable<ProcurementDetail>;
+            return View(procurement);
+        }
+
+        public async Task<IActionResult> Create()
+        {
+            var supplierResponse = await _httpClient.GetAsync("https://localhost:7071/api/SupplierDetails");
+            if (!supplierResponse.IsSuccessStatusCode)
+            {
+                return StatusCode((int)supplierResponse.StatusCode, "Error fetching suppliers");
+            }
+
+            var supplierData = await supplierResponse.Content.ReadAsStringAsync();
+            var suppliers = JsonConvert.DeserializeObject<List<SupplierDetail>>(supplierData);
+
+            var productResponse = await _httpClient.GetAsync("https://localhost:7071/api/Products");
+            if (!productResponse.IsSuccessStatusCode)
+            {
+                return StatusCode((int)productResponse.StatusCode, "Error fetching products");
+            }
+
+            var productData = await productResponse.Content.ReadAsStringAsync();
+            var products = JsonConvert.DeserializeObject<List<Product>>(productData);
+
+            ViewData["SupId"] = new SelectList(suppliers, "SupId", "SubName");
+            ViewData["ProductId"] = new SelectList(products, "ProductId", "ProductName");
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(ProcurementDetail procurementDetail)
+        {
+            if (ModelState.IsValid)
+            {
+                var response = await _httpClient.PostAsJsonAsync("https://localhost:7071/api/ProcurementDetails", procurementDetail);
+                response.EnsureSuccessStatusCode();
+
+                return RedirectToAction(nameof(Index));
+            }
+            return View(procurementDetail);
+        }
+    }
+}
+
+-------------------------------------------
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using SportsStoreManagementSystem.Entities;
+
+namespace SportsStoreManagementSystem.CoreMVC.Controllers
+{
+    [Authorize(Roles = "Admin")]
+    public class ProductCategoryController : Controller
+    {
+        private readonly HttpClient _httpClient;
+
+        public ProductCategoryController(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var response = await _httpClient.GetAsync("https://localhost:7071/api/ProductCategory");
+            response.EnsureSuccessStatusCode();
+            var data = await response.Content.ReadAsStringAsync();
+            var productCategory = JsonConvert.DeserializeObject<List<ProductCategory>>(data) as IEnumerable<ProductCategory>;
+            return View(productCategory);
+        }
+
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(ProductCategory productCategory)
+        {
+            if (ModelState.IsValid)
+            {
+
+                var response = await _httpClient.PostAsJsonAsync("https://localhost:7071/api/ProductCategory", productCategory);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return StatusCode((int)response.StatusCode, "Category already exists");
+                }
+
+                return RedirectToAction(nameof(Index));
+            }
+            return View(productCategory);
+        }
+
+    }
+}
+
+---------------------------------------------
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using SportsStoreManagementSystem.Entities;
+
+namespace SportsStoreManagementSystem.CoreMVC.Controllers
+{
+    [Authorize(Roles = "Admin")]
+    public class ProductInventoryController : Controller
+    {
+        private readonly HttpClient _httpClient;
+
+        public ProductInventoryController(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var response = await _httpClient.GetAsync("https://localhost:7071/api/ProductInventory");
+            response.EnsureSuccessStatusCode();
+            var data = await response.Content.ReadAsStringAsync();
+            var pin = JsonConvert.DeserializeObject<List<ProductInventory>>(data) as IEnumerable<ProductInventory>;
+            return View(pin);
+        }
+
+        public async Task<IActionResult> Edit(int id, int id2)
+        {
+            var response = await _httpClient.GetAsync($"https://localhost:7071/api/ProductInventory/{id}/{id2}");
+            response.EnsureSuccessStatusCode();
+
+            var data = await response.Content.ReadAsStringAsync();
+            var pinv = JsonConvert.DeserializeObject<ProductInventory>(data);
+            TempData["stock"] = pinv.Stocks;
+            return View(pinv);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(ProductInventory productInventory)
+        {
+            //if (id != supplierDetail.SupId)
+            //{
+            //    return BadRequest();
+            //}
+            int stock = Convert.ToInt32(TempData["stock"]);
+            productInventory.Stocks = stock - productInventory.Stocks;
+            if (ModelState.IsValid)
+            {
+                var response = await _httpClient.PutAsJsonAsync($"https://localhost:7071/api/ProductInventory", productInventory);
+                response.EnsureSuccessStatusCode();
+
+                return RedirectToAction(nameof(Index));
+            }
+            return View(productInventory);
+        }
+    }
+}
+
+-------------------------------------------
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using SportsStoreManagementSystem.Entities;
+using System.Net.Http;
+//using SportsStoreManagementSystem.DAL.Models;
+
+namespace SportsStoreManagementSystem.CoreMVC.Controllers
+{
+    [Authorize(Roles = "Admin")]
+    public class ProductsController : Controller
+    {
+        private readonly HttpClient _httpClient;
+        //SportsDbContext db = new SportsDbContext();
+
+        public ProductsController(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var response = await _httpClient.GetAsync("https://localhost:7071/api/Products");
+            response.EnsureSuccessStatusCode();
+            var data = await response.Content.ReadAsStringAsync();
+            var products = JsonConvert.DeserializeObject<List<Product>>(data) as IEnumerable<Product>;
+            return View(products);
+        }
+
+        public async Task<IActionResult> Create()
+        {
+            var categoryResponse = await _httpClient.GetAsync("https://localhost:7071/api/ProductCategory");
+            if (!categoryResponse.IsSuccessStatusCode)
+            {
+                return StatusCode((int)categoryResponse.StatusCode, "Error fetching categories");
+            }
+
+            var categoryData = await categoryResponse.Content.ReadAsStringAsync();
+            var categories = JsonConvert.DeserializeObject<List<ProductCategory>>(categoryData);
+
+            ViewData["CategoryId"] = new SelectList(categories, "CategoryId", "CategoryName");
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Product product)
+        {
+            if (ModelState.IsValid)
+            {
+                var response = await _httpClient.PostAsJsonAsync("https://localhost:7071/api/Products", product);
+                response.EnsureSuccessStatusCode();
+
+                return RedirectToAction(nameof(Index));
+            }
+            return View(product);
+        }
+    }
+}
+
+------------------------------------------
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using SportsStoreManagementSystem.Entities;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
+
+[Authorize(Roles = "Admin")]
+public class SupplierDetailsController : Controller
+{
+    private readonly HttpClient _httpClient;
+
+    public SupplierDetailsController(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var response = await _httpClient.GetAsync("https://localhost:7071/api/SupplierDetails");
+        response.EnsureSuccessStatusCode();
+        var data = await response.Content.ReadAsStringAsync();
+        var suppliers = JsonConvert.DeserializeObject<List<SupplierDetail>>(data) as IEnumerable<SupplierDetail>;
+        return View(suppliers);
+    }
+
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(SupplierDetail supplierDetail)
+    {
+        if (ModelState.IsValid)
+        {
+            var response = await _httpClient.PostAsJsonAsync("https://localhost:7071/api/SupplierDetails", supplierDetail);
+            response.EnsureSuccessStatusCode();
+
+            return RedirectToAction(nameof(Index));
+        }
+        return View(supplierDetail);
+    }
+
+    public async Task<IActionResult> Edit(int id)
+    {
+        var response = await _httpClient.GetAsync($"https://localhost:7071/api/SupplierDetails/{id}");
+        response.EnsureSuccessStatusCode();
+
+        var data = await response.Content.ReadAsStringAsync();
+        var supplier = JsonConvert.DeserializeObject<SupplierDetail>(data);
+        return View(supplier);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(SupplierDetail supplierDetail)
+    {
+        //if (id != supplierDetail.SupId)
+        //{
+        //    return BadRequest();
+        //}
+
+        if (ModelState.IsValid)
+        {
+            var response = await _httpClient.PutAsJsonAsync($"https://localhost:7071/api/SupplierDetails", supplierDetail);
+            response.EnsureSuccessStatusCode();
+
+            return RedirectToAction(nameof(Index));
+        }
+        return View(supplierDetail);
+    }
+}
+
+-------------------------------------------
+appsettings.json
+-------------------------------------------
+
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\local;Database=SportsDB;Trusted_Connection=True;"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+
+---------------------------------------
+Program.cs
+---------------------------------------
+
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using SportsStoreManagementSystem.CoreMVC.Data;
+using SportsStoreManagementSystem.DAL.Models;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString));
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddControllersWithViews();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<SportsDbContext, SportsDbContext>();
+
+var app = builder.Build();
+
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseMigrationsEndPoint();
+}
+else
+{
+    app.UseExceptionHandler("/Home/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapRazorPages();
+
+app.Run();
+
+--------------------------------------------------------------
+
+
+
