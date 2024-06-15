@@ -1,0 +1,1459 @@
+BILLING---------------------------------------------------------------
+@model SportsStoreManagementSystem.CoreMVC.Models.BillSummaryViewModel
+
+@{
+    ViewData["Title"] = "Bill Summary";
+}
+
+<h2>Order Placed Successfully</h2>
+<p>Sales ID: @Model.SalesId</p>
+
+<h3>Bill Summary</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.SalesItems)
+        {
+            <tr>
+                <td>@item.Product.ProductName</td>
+                <td>@item.PricePerItem</td>
+                <td>@item.Qty</td>
+                <td>@(item.PricePerItem * item.Qty)</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+---------------------------------------------------
+
+@model SportsStoreManagementSystem.Entities.CustomerDetail
+
+@{
+    ViewBag.Title = "Create Customer";
+}
+
+<div class="signin-container" style="margin-top: 30px;">
+    <div class="form-group">
+        <h1>Create</h1>
+        <h1>Customer Detail</h1>
+    </div>
+    @using (Html.BeginForm())
+    {
+        <div class="form-group">
+            @Html.LabelFor(model => model.CustomerName, htmlAttributes: new { @class = "control-label col-md-2" })
+            @Html.EditorFor(model => model.CustomerName, new { htmlAttributes = new { @class = "form-control", @id = "Supp", @required = "required" } })
+        </div>
+        <div class="form-group">
+            @Html.LabelFor(model => model.CustomerContact, htmlAttributes: new { @class = "control-label col-md-2" })
+            @Html.EditorFor(model => model.CustomerContact, new { htmlAttributes = new { @class = "form-control", @id = "Supp1", @required = "required", maxlength = "10", minlength= "10" } })
+        </div>
+        <button type="submit" class="btn btn-primary">
+            Check Customer
+        </button>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#Supp').on('input', function () {
+                this.value = this.value.replace(/[^a-zA-Z]/g, '');
+            });
+
+            $('#Supp1').on('input', function () {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        });
+    </script>
+}
+
+-------------------------------------------------
+
+@model SportsStoreManagementSystem.CoreMVC.Models.BillingViewModel
+
+@{
+    ViewData["Title"] = "Billing Page";
+}
+
+<h2 class="mt-4">Billing Page</h2>
+
+<div class="card mt-4">
+    <div class="card-header">
+        Customer Details
+    </div>
+    <div class="card-body">
+        <p><strong>Name:</strong> @Model.Customer.CustomerName</p>
+        <p><strong>Contact:</strong> @Model.Customer.CustomerContact</p>
+    </div>
+</div>
+
+<div class="mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="categorySelect" class="form-label">Select Category</label>
+                <select id="categorySelect" class="form-select">
+                    <option value="">-- Select Category --</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.CategoryId">@category.CategoryName</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="productSelect" class="form-label">Select Product</label>
+                <select id="productSelect" class="form-select" disabled>
+                    <option value="">-- Select Product --</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="price" class="form-label">Price</label>
+                <input type="text" id="price" class="form-control" readonly />
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="qty" class="form-label">Quantity</label>
+                <input type="number" id="qty" class="form-control" value="1" min="1" />
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="supplierSelect" class="form-label">Select Supplier</label>
+                <select id="supplierSelect" class="form-select" disabled>
+                    <option value="">-- Select Supplier --</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <button style="margin-top: 32px" type="button" id="addProduct" class="btn btn-primary">Add Product</button>
+            <button style="margin-top: 32px" type="button" id="checkout" class="btn btn-success">Checkout</button>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <h3>Selected Products</h3>
+    <table class="table table-striped" id="selectedProductsTable">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            $('#categorySelect').change(function () {
+                var categoryId = $(this).val();
+                var productSelect = $('#productSelect');
+                productSelect.empty();
+                productSelect.append('<option value="">-- Select Product --</option>');
+                $('#price').val('');
+                if (categoryId) {
+                    $.getJSON('@Url.Action("GetProductsByCategory")', { categoryId: categoryId }, function (data) {
+                        if (!data.success) {
+                            productSelect.prop('disabled', true);
+                            var supplierSelect = $('#supplierSelect');
+                            supplierSelect.empty();
+                            supplierSelect.append('<option value="">-- Select Supplier --</option>');
+                            supplierSelect.prop('disabled', true);
+                        }
+                        else {
+                            productSelect.prop('disabled', false);
+                            $.each(data.products, function (index, item) {
+                                productSelect.append('<option value="' + item.productId + '" data-price="' + item.price + '">' + item.productName + '</option>');
+                            });
+                        }
+                    });
+                } else {
+                    productSelect.prop('disabled', true);
+                }
+            });
+
+            $('#productSelect').change(function () {
+                var selectedOption = $(this).find('option:selected');
+                var productId = $(this).val();
+                var price = selectedOption.data('price');
+                $('#price').val(price);
+
+                var supplierSelect = $('#supplierSelect');
+                supplierSelect.empty();
+                supplierSelect.append('<option value="">-- Select Supplier --</option>');
+                if (productId) {
+                    $.getJSON('@Url.Action("GetSuppliersByProductId")', { productId: productId }, function (data) {
+                        supplierSelect.prop('disabled', false);
+                        console.log(data);
+                        $.each(data, function (index, item) {
+                            supplierSelect.append('<option value="' + item.supId + '">' + item.subName + '</option>');
+                        });
+                    });
+                } else {
+                    supplierSelect.prop('disabled', true);
+                }
+            });
+
+            $('#supplierSelect').change(function () {
+                var supID = $(this).val();
+                var productID = $('#productSelect').find('option:selected').val();
+
+                $.getJSON('@Url.Action("GetProductStocks")', { productID: productID, supID: supID }, function (data) {
+                    console.log(data.stocks);
+                    $('#qty').attr('max', parseInt(data.stocks));
+                });
+            });
+
+            $('#addProduct').click(function () {
+                var productSelect = $('#productSelect');
+                var supplierSelect = $('#supplierSelect');
+                var selectedOption = productSelect.find('option:selected');
+                var productName = selectedOption.text();
+                var productId = selectedOption.val();
+                var supplierId = supplierSelect.find('option:selected').val();
+                var categoryId = $('#categorySelect').find('option:selected').val();
+                var price = $('#price').val();
+                var qty = $('#qty').val();
+                var total = price * qty;
+
+                var checkExist = false;
+                var rows = $('#selectedProductsTable tbody tr').each(function () {
+                    if ($(this).data('product-id') == productId) {
+                        checkExist = true;
+                        return;
+                    }
+                });
+
+                var max = $("#qty").attr('max');
+                var value = $("#qty").val();
+
+                console.log(max + " " + value);
+
+                if (!categoryId) {
+                    alert("Please select a Category.");
+                }
+
+                else if (!productId) {
+                    alert("Please select a Product.");
+                }
+
+                else if (!supplierId) {
+                    alert("Please select a Supplier.");
+                }
+                else if (checkExist) {
+                    alert("Product is already in Bill.");
+                }
+                else if (parseInt(value) > parseInt(max)) {
+                    alert("Only " + parseInt(max) + " Items Available in Inventory");
+                }
+                else if (productId && qty > 0) {
+                    var newRow = '<tr data-product-id="' + productId + '" data-supplier-id="' + supplierId + '"><td>' + productName + '</td><td>' + price + '</td><td>' + qty + '</td><td>' + total + '</td><td><button type="button" class="btn btn-danger btn-sm remove-product">Remove</button></td></tr>';
+                    $('#selectedProductsTable tbody').append(newRow);
+                }
+
+                // Add remove product functionality
+                $('.remove-product').off('click').on('click', function () {
+                    $(this).closest('tr').remove();
+                });
+            });
+
+            $('#checkout').click(function () {
+                var customerId = '@Model.Customer.CustomerId';
+                var items = [];
+                $('#selectedProductsTable tbody tr').each(function () {
+                    var row = $(this);
+                    var item = {
+                        supId: row.data('supplier-id'),
+                        CustomerId: customerId,
+                        ProductId: row.data('product-id'),
+                        Qty: row.find('td:nth-child(3)').text(),
+                        PricePerItem: row.find('td:nth-child(2)').text()
+                    };
+                    items.push(item);
+                });
+
+                $.ajax({
+                    url: '/Billing/Checkout',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(items),
+                    success: function (response) {
+                        window.location.href = '/Billing/BillSummary/' + response;
+                    },
+                    error: function (error) {
+                        alert('Error: ' + error.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+}
+
+--------------------------------------------------
+
+@{
+    ViewData["Title"] = "Return Order";
+}
+
+<h2>Return Order</h2>
+
+<div class="mb-3">
+    <label for="orderIdInput" class="form-label">Order ID</label>
+    <input type="text" id="orderIdInput" class="form-control" placeholder="Enter Order ID">
+    <button id="fetchOrderItems" class="btn btn-primary mt-2">Fetch Order Items</button>
+</div>
+
+<div id="orderItemsSection" style="display:none;">
+    <h3>Order Items</h3>
+    <table class="table table-striped" id="orderItemsTable">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Qty to Return</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <button id="returnItems" class="btn btn-success">Return Items</button>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#fetchOrderItems').click(function () {
+                var orderId = $('#orderIdInput').val();
+                $.getJSON('@Url.Action("GetOrderItems")', { orderId: orderId }, function (data) {
+                    if (data.success) {
+                        console.log(data.orderItems);
+                        var tbody = $('#orderItemsTable tbody');
+                        tbody.empty();
+                        $.each(data.orderItems, function (index, item) {
+                            if (parseInt(item.qty) > 0) {
+                                var row = '<tr data-sales-item-id="' + item.salesId + '" data-product-id="' + item.productId + '" data-sup-id="' + item.supId + '">' +
+                                    '<td>' + item.product.productName + '</td>' +
+                                    '<td>' + item.pricePerItem + '</td>' +
+                                    '<td>' + item.qty + '</td>' +
+                                    '<td><input type="number" class="form-control qty-to-return" min="1" max="' + item.qty + '" value="0"></td>' +
+                                    '</tr>';
+                                tbody.append(row);
+                            }
+                            else {
+                                var row = '<tr data-sales-item-id="' + item.salesId + '" data-product-id="' + item.productId + '" data-sup-id="' + item.supId + '">' +
+                                    '<td>' + item.product.productName + '</td>' +
+                                    '<td>' + item.pricePerItem + '</td>' +
+                                    '<td>' + item.qty + '</td>' +
+                                    '<td><input type="number" class="form-control qty-to-return" disabled min="1" max="' + item.qty + '" value="0"></td>' +
+                                    '</tr>';
+                                tbody.append(row);
+                            }
+                        });
+                        $('#orderItemsSection').show();
+                    } else {
+                        alert(data.message);
+                    }
+                });
+            });
+
+            $('#returnItems').click(function () {
+                var isValid = true;
+                var returnItems = [];
+                $('#orderItemsTable tbody tr').each(function () {
+                    var row = $(this);
+                    var qtyToReturn = row.find('.qty-to-return').val();
+                    if (qtyToReturn <= parseInt(row.find('td:nth-child(3)').text())) {
+                        if (qtyToReturn > 0) {
+                            var returnItem = {
+                                SalesId: row.data('sales-item-id'),
+                                SupId: row.data('sup-id'),
+                                ProductId: row.data('product-id'),
+                                Qty: qtyToReturn
+                            };
+                            returnItems.push(returnItem);
+                        }
+                    }
+                    else {
+                        isValid = false;
+                    }
+                });
+
+                console.log(returnItems);
+
+                if (returnItems.length > 0 && isValid) {
+                    if (confirm('Are you sure you want to return the selected items?')) {
+                        $.ajax({
+                            url: '/Billing/ReturnItems',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(returnItems),
+                            success: function () {
+                                alert('Items returned successfully');
+                                $('#fetchOrderItems').click(); // Refresh the order items
+                            },
+                            error: function () {
+                                alert('Error processing returns');
+                            }
+                        });
+                    }
+                } else {
+                    alert('Please enter a valid quantity to return');
+                }
+            });
+        });
+    </script>
+}
+
+----------------------------------------------------
+
+@model SportsStoreManagementSystem.Entities.CustomerDetail
+
+@{
+    ViewBag.Title = "Check Customer";
+}
+<style>
+    .bold-label{
+        font-weight:bold;
+    }
+</style>
+
+<div class="signin-container" style="margin-top: 30px;">
+    <div class="form-group">
+        <h1>Check</h1>
+        <h1>Customer Detail</h1>
+    </div>
+    @using (Html.BeginForm())
+    {
+        <div class="form-group">
+            @Html.LabelFor(model => model.CustomerContact, "Contact:", htmlAttributes: new { @class = "control-label col-md-2 bold-label" })
+            @Html.EditorFor(model => model.CustomerContact, new { htmlAttributes = new { @class = "form-control", @id = "Supp1", @required = "required", maxlength = "10", minlength = "10" } })
+        </div>
+        <button type="submit" class="btn btn-primary">
+            Check Customer
+        </button>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#Supp1').on('input', function () {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        });
+    </script>
+}
+
+HOME------------------------------------------------
+@{
+    ViewBag.Title = "Home Page";
+}
+
+
+<div id="carouselExample" class="carousel slide">
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <img src="https://tallypress.com/wp-content/uploads/2018/12/Top-10-Sports-Shops-in-KL-Selangor.jpg" class="d-block w-100" alt="First Slide">
+        </div>
+        <div class="carousel-item">
+            <img src="https://cdn.sanity.io/images/c1chvb1i/production/438af146b26507a524cfdb8254e5b7835aafc7d2-1100x735.jpg/jd-slyvia-park-open-3.jpg" class="d-block w-100" alt="Second Slide">
+        </div>
+        <div class="carousel-item">
+            <img src="https://im.whatshot.in/img/2019/Nov/puma-store-tokyo-playner-franz-studio-002-1904040457-1573483296.jpg" class="d-block w-100" alt="Third Slide">
+        </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
+
+-------------------------------------------------
+
+@{
+    ViewData["Title"] = "Privacy Policy";
+}
+<h1>@ViewData["Title"]</h1>
+
+<div class="container">
+    <p>Welcome to the Sports Store Management System ("SSMS"). We value your privacy and are committed to protecting your personal information. This Privacy Policy outlines how we collect, use, disclose, and safeguard your data when you use our web application.</p>
+
+    <h2>Information We Collect</h2>
+
+    <h3>Personal Information</h3>
+    <p>When you register or interact with our application, we may collect the following personal information:</p>
+    <ul>
+        <li><strong>Contact Information</strong>: Name, email address, phone number.</li>
+        <li><strong>Account Information</strong>: Username, password, profile picture.</li>
+        <li><strong>Billing Information</strong>: Credit card details, billing address.</li>
+    </ul>
+
+    <h3>Non-Personal Information</h3>
+    <p>We may also collect non-personal information such as:</p>
+    <ul>
+        <li><strong>Usage Data</strong>: Browser type, operating system, IP address, access times, pages viewed, and the referring URL.</li>
+        <li><strong>Technical Data</strong>: Device type, network and connection information.</li>
+    </ul>
+
+    <h2>How We Use Your Information</h2>
+    <p>We use the information we collect to:</p>
+    <ul>
+        <li>Provide, operate, and maintain our services.</li>
+        <li>Improve, personalize, and expand our application.</li>
+        <li>Process transactions and manage your orders.</li>
+        <li>Communicate with you, including sending updates and promotional materials.</li>
+        <li>Prevent and address fraud, unauthorized activity, and other legal issues.</li>
+    </ul>
+
+    <h2>How We Share Your Information</h2>
+    <p>We may share your information in the following situations:</p>
+    <ul>
+        <li><strong>With Service Providers</strong>: We may share your information with third-party vendors to help us provide and improve our services.</li>
+        <li><strong>For Legal Reasons</strong>: We may disclose your information to comply with legal obligations, regulations, or governmental requests.</li>
+        <li><strong>Business Transfers</strong>: In the event of a merger, acquisition, or asset sale, your information may be transferred as part of the business transaction.</li>
+    </ul>
+
+    <h2>Data Security</h2>
+    <p>We implement various security measures to protect your personal information, including encryption, firewalls, and secure access controls. However, no security system is impenetrable, and we cannot guarantee absolute security.</p>
+
+    <h2>Your Rights</h2>
+    <p>Depending on your location, you may have the following rights regarding your personal information:</p>
+    <ul>
+        <li><strong>Access</strong>: You can request access to your personal data we hold.</li>
+        <li><strong>Correction</strong>: You can request corrections to any inaccurate or incomplete personal data.</li>
+        <li><strong>Deletion</strong>: You can request the deletion of your personal data.</li>
+        <li><strong>Restriction</strong>: You can request the restriction of the processing of your personal data.</li>
+        <li><strong>Portability</strong>: You can request a copy of your personal data in a structured, machine-readable format.</li>
+    </ul>
+    <p>To exercise these rights, please contact us at <a href="mailto:support@sportsstore.com">support@sportsstore.com</a>.</p>
+
+    <h2>Cookies and Tracking Technologies</h2>
+    <p>We use cookies and similar tracking technologies to enhance your experience on our application. You can manage your cookie preferences through your browser settings.</p>
+
+    <h2>Changes to This Privacy Policy</h2>
+    <p>We may update this Privacy Policy from time to time. Any changes will be posted on this page, and the "Last Updated" date will be revised. We encourage you to review this policy periodically to stay informed about how we are protecting your information.</p>
+
+    <h2>Contact Us</h2>
+    <p>If you have any questions or concerns about this Privacy Policy, please contact us at:</p>
+    <ul>
+        <li><strong>Email</strong>: <a href="mailto:support@sportsstore.com">support@sportsstore.com</a></li>
+        <li><strong>Address</strong>: Sports Store Management System, Old Madras Road Aveda Meta Building, Bengaluru, Karnatka, 560038.</li>
+    </ul>
+
+    <p><em>Last Updated: June 10, 2024</em></p>
+
+    <p>By using the Sports Store Management System, you acknowledge that you have read and understood this Privacy Policy.</p>
+</div>
+
+PROCUREMENTSDETAILS------------------------------------------------------
+@model IEnumerable<SportsStoreManagementSystem.Entities.ProcurementDetail>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Procurement Details</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>
+                @* @Html.DisplayNameFor(model => model.ProductId) *@
+                Supplier Name
+            </th>
+            <th>
+                @* @Html.DisplayNameFor(model => model.SupId) *@
+                Product Name
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Qty)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalPrice)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Sup.SubName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Product.ProductName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Qty)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TotalPrice)
+            </td>
+@*             <td>
+                <a asp-action="Edit" asp-route-id="@item.ProcurementId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.ProcurementId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.ProcurementId">Delete</a>
+            </td> *@
+        </tr>
+}
+    </tbody>
+</table>
+
+---------------------------------------------
+
+@model SportsStoreManagementSystem.Entities.ProcurementDetail
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Procurement Detail</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="SupId" class="control-label"><b>Select Supplier</b></label>
+                <select asp-for="SupId" class ="form-control" asp-items="ViewBag.SupId" required="required"></select>
+                @* <input asp-for="SupId" class="form-control" required="required" type="number"/> *@
+                <span asp-validation-for="SupId" class="text-danger"></span>
+            </div>
+            <br />
+            <div class="form-group">
+                <label asp-for="ProductId" class="control-label"><b>Select Product</b></label>
+                <select asp-for="ProductId" class="form-control" asp-items="ViewBag.ProductId" required="required"></select>
+                @* <input asp-for="ProductId" class="form-control" required="required" type="number"/> *@
+                <span asp-validation-for="ProductId" class="text-danger"></span>
+            </div>
+            <br />
+            <div class="form-group">
+                <label asp-for="Qty" class="control-label"><b>Quantity</b></label>
+                <input asp-for="Qty" class="form-control" required="required" id="qty" />
+                <span asp-validation-for="Qty" class="text-danger"></span>
+            </div>
+@*             <div class="form-group">
+                <label asp-for="TotalPrice" class="control-label"></label>
+                <input asp-for="TotalPrice" class="form-control" />
+                <span asp-validation-for="TotalPrice" class="text-danger"></span>
+            </div> *@
+            <br />
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#qty').attr('min', 0);
+
+        $('#qty').on('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });    
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+PRODUCT CATEGORY-----------------------------
+@model IEnumerable<SportsStoreManagementSystem.Entities.ProductCategory>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>List of Product Categories</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>
+                @* @Html.DisplayNameFor(model => model.CategoryName) *@
+                Category
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.CategoryName)
+            </td>
+            <td>
+               @*  <a asp-action="Edit" asp-route-id="@item.CategoryId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.CategoryId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.CategoryId">Delete</a> *@
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+---------------------------------------
+
+@model SportsStoreManagementSystem.Entities.ProductCategory
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Product Category</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="CategoryName" class="control-label"><b>Category Name</b></label>
+                <input asp-for="CategoryName" class="form-control" required="required" id="CategoryName" type="text"/>
+                <span asp-validation-for="CategoryName" class="text-danger"></span>
+            </div>
+            <br />
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+ 
+        $('#CategoryName').on('input', function () {
+            this.value = this.value.replace(/[^a-zA-Z]/g, '');
+        });
+    });
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+PRODUCT INVENTORY-----------------------------------------------------
+@model IEnumerable<SportsStoreManagementSystem.Entities.ProductInventory>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Product Inventory</h1>
+
+@* <p>
+    <a asp-action="Create">Create New</a>
+</p> *@
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>
+                @* @Html.DisplayNameFor(model => model.SupId) *@
+                Supplier Name
+            </th>
+            <th>
+                @* @Html.DisplayNameFor(model => model.ProductId) *@
+                Product Name
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Stocks)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Sup.SubName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Product.ProductName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Stocks)
+            </td>
+            <td>
+                @Html.ActionLink("Return", "Edit", new { id = item.SupId, id2 = item.ProductId })
+                @* @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ }) *@
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+
+------------------------------------------------
+
+@model SportsStoreManagementSystem.Entities.ProductInventory
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Return</h1>
+
+<h4>Product Inventory</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="SupId" />
+            <input type="hidden" asp-for="ProductId" />
+            <div class="form-group">
+                <label asp-for="Stocks" class="control-label"><b>Current Stocks:</b></label>
+                <input asp-for="Stocks" class="form-control" disabled />
+            </div>
+            <br />
+            <div class="form-group">
+                <label asp-for="Stocks" class="control-label"><b>Enter the unit of Stocks Returned:</b></label>
+                <input asp-for="Stocks" class="form-control" id="stocks" required="required" type="number"/>
+                <span asp-validation-for="Stocks" class="text-danger"></span>
+            </div>
+            <br />
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var max = $('#stocks').val();
+        $('#stocks').attr('min', 1);
+        $('#stocks').attr('max', max);
+
+        $('#stocks').on('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+PRODUCTS---------------------------------------------------
+
+@model IEnumerable<SportsStoreManagementSystem.Entities.Product>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Lists of Products</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>
+                @* @Html.DisplayNameFor(model => model.ProductName) *@
+                Product Name
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Price)
+            </th>
+@*             <th>
+                @Html.DisplayNameFor(model => model.Category)
+            </th> *@
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.ProductName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Price)
+            </td>
+@*             <td>
+                @Html.DisplayFor(modelItem => item.Category.CategoryName)
+            </td> *@
+@*             <td>
+                <a asp-action="Edit" asp-route-id="@item.ProductId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.ProductId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.ProductId">Delete</a>
+            </td> *@
+        </tr>
+}
+    </tbody>
+</table>
+---------------------------------------------------------
+
+@model SportsStoreManagementSystem.Entities.Product
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Product</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="CategoryId" class="control-label"><b>Category</b></label>
+                <select asp-for="CategoryId" class ="form-control" asp-items="ViewBag.CategoryId"></select>
+            </div>
+            <br />
+            <div class="form-group">
+                <label asp-for="ProductName" class="control-label"><b>Product Name</b></label>
+                <input asp-for="ProductName" class="form-control" required="required" />
+                <span asp-validation-for="ProductName" class="text-danger"></span>
+            </div>
+            <br />
+            <div class="form-group">
+                <label asp-for="Price" class="control-label"><b>Price</b></label>
+                <input asp-for="Price" class="form-control" required="required" />
+                <span asp-validation-for="Price" class="text-danger"></span>
+            </div>
+            <br />
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+
+----====================================================================================================================================--------------------------
+
+S H A R E D 
+
+=====================================================================================================================================------------------------------
+
+_Layout.cshtml
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SportsStoreManagementSystem.CoreMVC</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/SportsStoreManagementSystem.CoreMVC.styles.css" asp-append-version="true" />
+    <style>
+        body {
+            padding-top: 69px;
+        }
+
+            body::-webkit-scrollbar {
+                display: none;
+            }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            padding: 1% 3%;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 0 10px 0 #0000004d;
+        }
+
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-family: Roboto, Arial, sans-serif;
+            font-weight: bold;
+        }
+
+        .nav-link {
+            font-size: 1.2rem;
+            margin-left: 1.5rem;
+            cursor: pointer;
+        }
+
+            .nav-link:hover {
+                text-decoration: underline;
+            }
+
+        .nav-items {
+            display: flex;
+            align-items: center;
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .sidenav {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1001;
+            top: 0;
+            left: 0;
+            overflow-x: hidden;
+            transition: 0.5s;
+            position: fixed;
+            background-color: #ffffff;
+            overflow-x: hidden;
+            padding-top: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+            .sidenav a {
+                padding: 8px 8px 8px 32px;
+                text-decoration: none;
+                font-size: 18px;
+                color: #333333;
+                display: block;
+                white-space: nowrap;
+            }
+
+        .openbtn {
+            font-size: 30px;
+            cursor: pointer;
+            color: #333333;
+            padding: 20px;
+            border: none;
+        }
+
+        .sidenav .closebtn {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .sidenav-items {
+            margin-top: 60px;
+        }
+
+        .signin-container {
+            width: 300px;
+            background-color: #fff;
+            padding: 2rem;
+            padding-top: 1rem;
+            margin: 0 auto;
+            box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .2);
+        }
+
+        .form-group h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 0.5rem;
+            }
+
+            .form-group input {
+                border: 1px solid;
+                border-radius: 0;
+                width: 100%;
+            }
+
+        .signin-container button,
+        .signup-container button {
+            border-radius: 0;
+            margin-top: 0.5rem;
+            padding: 0.4rem 1rem;
+        }
+
+        .navbar-nav {
+            flex-direction: row;
+        }
+
+        .navbar-light .navbar-nav .nav-link:first-child {
+            color: rgba(0, 0, 0, .55);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <div>
+            @if (User.Identity.IsAuthenticated)
+            {
+                <span class="openbtn" onclick="openSideNav()">&#9776;</span>
+            }
+            @Html.ActionLink("Sports Store Management System", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+        </div>
+        @* <ul class="nav-items" id="navitems">
+            <li class="nav-item">
+                @Html.ActionLink("Home", "Index", "Home", new { area = "" }, new { @class = "nav-link" })
+            </li>
+            <li class="nav-item">
+                @Html.ActionLink("Admin", "Index", "Home", new { area = "" }, new { @class = "nav-link" })
+            </li>
+            <li class="nav-item">
+                @Html.ActionLink("Logout", "Index", "Home", new { area = "" }, new { @class = "nav-link" })
+            </li>
+        </ul> *@
+        <partial name="_LoginPartial" />
+    </nav>
+    <div class="sidenav-overlay"></div>
+    <nav id="sideNav" class="sidenav">
+        @if (User.Identity.IsAuthenticated)
+        {
+            if (User.IsInRole("Admin"))
+            {
+                <a class="closebtn" style="padding: 5px;" onclick="closeSideNav();">&times;</a>
+                <div class="sidenav-items">
+                    @Html.ActionLink("Supplier", "Index", "SupplierDetails", new { area = "" }, new { @class = "nav-link" })
+                    @Html.ActionLink("Category", "Index", "ProductCategory", new { area = "" }, new { @class = "nav-link" })
+                    @Html.ActionLink("Products", "Index", "Products", new { area = "" }, new { @class = "nav-link" })
+                    @Html.ActionLink("Procure", "Index", "ProcurementDetails", new { area = "" }, new { @class = "nav-link" })
+                    @Html.ActionLink("Inventory", "Index", "ProductInventory", new { area = "" }, new { @class = "nav-link" })
+                </div>
+            }
+            if (User.IsInRole("Clerk"))
+            {
+                <a class="closebtn" style="padding: 5px;" onclick="closeSideNav();">&times;</a>
+                <div class="sidenav-items">
+                    @Html.ActionLink("Purchase", "Search", "Billing", new { area = "" }, new { @class = "nav-link" })
+                    @Html.ActionLink("Return", "Return", "Billing", new { area = "" }, new { @class = "nav-link" })
+                </div>
+            }
+        }
+    </nav>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2024 - Sports Store Management System - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+    <script>
+        function openSideNav() {
+            var sideNav = document.getElementById("sideNav");
+            sideNav.style.width = "250px";
+            var sideNavOverlay = document.querySelectorAll("sidenav-overlay")[0];
+            sideNavOverlay.style.width = "100%";
+        }
+
+        function closeSideNav() {
+            var sideNav = document.getElementById("sideNav");
+            sideNav.style.width = "0";
+            var sideNavOverlay = document.querySelectorAll("sidenav-overlay")[0];
+            sideNavOverlay.style.width = "0px";
+        }
+    </script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+----------------------------------------------------------------------------------------------------------
+
+_LoginPartial.cshtml
+
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+<ul class="navbar-nav">
+@if (SignInManager.IsSignedIn(User))
+{
+    <li class="nav-item">
+        <a  class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity?.Name!</a>
+    </li>
+    <li class="nav-item">
+        <form  class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+            <button  type="submit" class="nav-link btn btn-link text-dark">Logout</button>
+        </form>
+    </li>
+}
+else
+{
+@*     <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Register</a>
+    </li> *@
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
+    </li>
+}
+</ul>
+
+--------------------------------------------------------------------------------
+
+_ValidationScriptsPartial.cshtml
+
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+-----------------------------------------------------------------------------------
+Error.cshtml
+
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<h1 class="text-danger">Error.</h1>
+<h2 class="text-danger">An error occurred while processing your request.</h2>
+
+@if (Model.ShowRequestId)
+{
+    <p>
+        <strong>Request ID:</strong> <code>@Model.RequestId</code>
+    </p>
+}
+
+<h3>Development Mode</h3>
+<p>
+    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
+</p>
+<p>
+    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
+    It can result in displaying sensitive information from exceptions to end users.
+    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
+    and restarting the app.
+</p>
+
+SupplierDetails------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+@model IEnumerable<SportsStoreManagementSystem.Entities.SupplierDetail>
+
+<h1>Supplier Details</h1>
+<p>
+    <a href="@Url.Action("Create")">Create New</a>
+</p>
+<table class="table table-striped">
+    <tr>
+        <th>Name</th>
+        <th>Address</th>
+        <th>Contact</th>
+        <th>Actions</th>
+    </tr>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.SubName</td>
+            <td>@item.SubAddress</td>
+            <td>@item.SubContact</td>
+            <td>
+                <a href="@Url.Action("Edit", new { id = item.SupId })">Edit</a>
+            </td>
+        </tr>
+    }
+</table>
+
+-----------------------------------------------------------------------------------
+
+@model SportsStoreManagementSystem.Entities.SupplierDetail
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>SupplierDetail</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form id="supplierForm" asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="SubName" class="control-label">Supplier Name</label>
+                <input asp-for="SubName" class="form-control" id="Supp" required />
+                <span asp-validation-for="SubName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SubAddress" class="control-label">Supplier Address</label>
+                <input asp-for="SubAddress" class="form-control" id="SubAddress" required />
+                <span asp-validation-for="SubAddress" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SubContact" class="control-label">Supplier Contact</label>
+                <input asp-for="SubContact" class="form-control" id="Supp1" required />
+                <span asp-validation-for="SubContact" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#Supp').on('input', function () {
+                this.value = this.value.replace(/[^a-zA-Z]/g, '');
+            });
+
+            $('#Supp1').on('input', function () {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        });
+    </script>
+}
+
+------------------------------------------------------------------------------------------------------
+
+@model SportsStoreManagementSystem.Entities.SupplierDetail
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>SupplierDetail</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="SupId" />
+            <div class="form-group">
+                <label asp-for="SubName" class="control-label"></label>
+                <input asp-for="SubName" class="form-control" id="Supp" required />
+                <span asp-validation-for="SubName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SubAddress" class="control-label"></label>
+                <input asp-for="SubAddress" class="form-control" id="Supp" required />
+                <span asp-validation-for="SubAddress" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SubContact" class="control-label"></label>
+                <input asp-for="SubContact" class="form-control" id="Supp1" required />
+                <span asp-validation-for="SubContact" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#Supp').on('input', function () {
+                this.value = this.value.replace(/[^a-zA-Z]/g, '');
+            });
+
+            $('#Supp1').on('input', function () {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        });
+    </script>
+}
+
+-------------------------------------------------------------------------------------------------------
+
+_ViewStart.cshtml
+
+@{
+    Layout = "_Layout";
+}
+
+-----------------------------------------
+
+_ViewImports.cshtml
+
+@using SportsStoreManagementSystem.CoreMVC
+@using SportsStoreManagementSystem.CoreMVC.Models
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+-------------------------------------------------------
+
+
+
