@@ -1,0 +1,378 @@
+SportsStoreManagementSystem.Entities
+
+CustomerDetail
+--------------
+
+using System;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
+
+namespace SportsStoreManagementSystem.Entities;
+
+public partial class CustomerDetail
+{
+    public int CustomerId { get; set; }
+
+    public string CustomerName { get; set; } = null!;
+
+    public string CustomerContact { get; set; } = null!;
+
+    public virtual ICollection<SalesHistory> SalesHistories { get; set; } = new List<SalesHistory>();
+
+    public virtual ICollection<SalesItem> SalesItems { get; set; } = new List<SalesItem>();
+}
+
+-----------------
+ProcurementDetail
+-----------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.Entities
+{
+    public partial class ProcurementDetail
+    {
+        public int ProcurementId { get; set; }
+
+        public int SupId { get; set; }
+
+        public int ProductId { get; set; }
+
+        public int Qty { get; set; }
+
+        public int? TotalPrice { get; set; }
+
+        public virtual Product? Product { get; set; }
+
+        public virtual SupplierDetail? Sup { get; set; }
+    }
+}
+
+-------
+Product
+-------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.Entities
+{
+    public partial class Product
+    {
+        public int CategoryId { get; set; }
+
+        public int ProductId { get; set; }
+
+        public string? ProductName { get; set; }
+
+        public int Price { get; set; }
+
+        [JsonIgnore]
+        public virtual ProductCategory? Category { get; set; }
+
+        [JsonIgnore]
+        public virtual ICollection<ProcurementDetail> ProcurementDetails { get; set; } = new List<ProcurementDetail>();
+
+        [JsonIgnore]
+        public virtual ICollection<ProductInventory> ProductInventories { get; set; } = new List<ProductInventory>();
+
+        [JsonIgnore]
+        public virtual ICollection<SalesItem> SalesItems { get; set; } = new List<SalesItem>();
+    }
+}
+
+---------------
+ProductCategory
+---------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.Entities
+{
+    public partial class ProductCategory
+    {
+        public int CategoryId { get; set; }
+
+        public string? CategoryName { get; set; } = null!;
+
+        public virtual ICollection<Product> Products { get; set; } = new List<Product>();
+    }
+}
+
+----------------
+ProductInventory
+----------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.Entities
+{
+    public partial class ProductInventory
+    {
+        public int SupId { get; set; }
+
+        public int ProductId { get; set; }
+
+        public int Stocks { get; set; }
+
+        public virtual Product? Product { get; set; } = null!;
+
+        public virtual SupplierDetail? Sup { get; set; } = null!;
+    }
+}
+
+-------------
+ReturnItemDto
+-------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.Entities
+{
+    public partial class ReturnItemDto
+    {
+        public int SalesId { get; set; }
+
+        public int? SupId { get; set; }
+
+        public int ProductId { get; set; }
+
+        public int Qty { get; set; }
+    }
+}
+
+------------
+SalesHistory
+------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.Entities
+{
+    public partial class SalesHistory
+    {
+        public int SalesId { get; set; }
+
+        public int? CustomerId { get; set; }
+
+        public DateTime? PurchaseDate { get; set; }
+
+        public int? BillTotal { get; set; }
+
+        public virtual CustomerDetail? Customer { get; set; }
+    }
+}
+
+---------
+SalesItem
+---------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.Entities
+{
+    public partial class SalesItem
+    {
+        public int SalesId { get; set; }
+
+        public int CustomerId { get; set; }
+
+        public int? SupId { get; set; }
+
+        public int ProductId { get; set; }
+
+        public int Qty { get; set; }
+
+        public int PricePerItem { get; set; }
+
+        public virtual CustomerDetail? Customer { get; set; }
+
+        public virtual Product? Product { get; set; }
+
+        public virtual SupplierDetail? Sup { get; set; }
+    }
+}
+
+------------
+SalesItemDto
+------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.Entities
+{
+    public partial class SalesItemDto
+    {
+        public int SalesId { get; set; }
+
+        public int CustomerId { get; set; }
+
+        public int? SupId { get; set; }
+
+        public int ProductId { get; set; }
+
+        public int Qty { get; set; }
+
+        public int PricePerItem { get; set; }
+    }
+}
+
+---------------
+SportsStoreEnum
+---------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.Entities
+{
+    public enum SportsStoreEnum
+    {
+
+        Continue = 100,
+        SwitchingProtocols = 101,
+        Processing = 102,
+        EarlyHints = 103,
+
+        // 2xx Success
+        OK = 200,
+        Created = 201,
+        Accepted = 202,
+        NonAuthoritativeInformation = 203,
+        NoContent = 204,
+        ResetContent = 205,
+        PartialContent = 206,
+        MultiStatus = 207,
+        AlreadyReported = 208,
+        IMUsed = 226,
+
+        // 3xx Redirection
+        MultipleChoices = 300,
+        MovedPermanently = 301,
+        Found = 302,
+        SeeOther = 303,
+        NotModified = 304,
+        UseProxy = 305,
+        TemporaryRedirect = 307,
+        PermanentRedirect = 308,
+
+        // 4xx Client Error
+        BadRequest = 400,
+        Unauthorized = 401,
+        PaymentRequired = 402,
+        Forbidden = 403,
+        NotFound = 404,
+        MethodNotAllowed = 405,
+        NotAcceptable = 406,
+        ProxyAuthenticationRequired = 407,
+        RequestTimeout = 408,
+        Conflict = 409,
+        Gone = 410,
+        LengthRequired = 411,
+        PreconditionFailed = 412,
+        PayloadTooLarge = 413,
+        URITooLong = 414,
+        UnsupportedMediaType = 415,
+        RangeNotSatisfiable = 416,
+        ExpectationFailed = 417,
+        ImATeapot = 418,
+        MisdirectedRequest = 421,
+        UnprocessableEntity = 422,
+        Locked = 423,
+        FailedDependency = 424,
+        TooEarly = 425,
+        UpgradeRequired = 426,
+        PreconditionRequired = 428,
+        TooManyRequests = 429,
+        RequestHeaderFieldsTooLarge = 431,
+        UnavailableForLegalReasons = 451,
+
+        // 5xx Server Error
+        InternalServerError = 500,
+        NotImplemented = 501,
+        BadGateway = 502,
+        ServiceUnavailable = 503,
+        GatewayTimeout = 504,
+        HTTPVersionNotSupported = 505,
+        VariantAlsoNegotiates = 506,
+        InsufficientStorage = 507,
+        LoopDetected = 508,
+        NotExtended = 510,
+        NetworkAuthenticationRequired = 511
+
+    }
+}
+
+--------------
+SupplierDetail
+--------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+namespace SportsStoreManagementSystem.Entities
+{
+    public partial class SupplierDetail
+    {
+        public int SupId { get; set; }
+
+        public string? SubName { get; set; }
+
+        public string? SubAddress { get; set; }
+
+        public string? SubContact { get; set; }
+
+        public virtual ICollection<ProcurementDetail> ProcurementDetails { get; set; } = new List<ProcurementDetail>();
+
+        [JsonIgnore]
+        public virtual ICollection<ProductInventory> ProductInventories { get; set; } = new List<ProductInventory>();
+
+        public virtual ICollection<SalesItem> SalesItems { get; set; } = new List<SalesItem>();
+    }
+}
+
+
