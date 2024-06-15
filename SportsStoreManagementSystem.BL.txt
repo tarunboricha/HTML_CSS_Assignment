@@ -1,0 +1,238 @@
+SportsStoreManagementSystem.BL
+
+CustomerDetailsBL
+-----------------------------------
+
+using SportsStoreManagementSystem.Entities;
+using SportsStoreManagementSystem.DAL;
+
+namespace SportsStoreManagementSystem.BL
+{
+    public class CustomerDetailsBL
+    {
+
+        public IEnumerable<CustomerDetail> GetCustomerDetailsBL()
+        {
+            CustomerDetailsDAL customerDetails = new CustomerDetailsDAL();
+            return customerDetails.GetCustomerDetailsDAL();
+            
+        }
+        public CustomerDetail GetCustomerDetailBL(int id)
+        {
+            CustomerDetailsDAL customerDetails = new CustomerDetailsDAL();
+            return customerDetails.GetCustomerDetailDAL(id);
+        }
+
+        public void AddCustomerDetailBL(CustomerDetail customerDetail)
+        {
+            CustomerDetailsDAL customerDetails = new CustomerDetailsDAL();
+            customerDetails.AddCustomerDetailDAL(customerDetail);
+        }
+
+
+        public SportsStoreEnum EditCustomerDetailBL(int id, CustomerDetail customerDetail)
+        {
+            CustomerDetailsDAL customerDetails = new CustomerDetailsDAL();
+            return customerDetails.EditCustomerDetailDAL(id,customerDetail);
+
+        }
+
+        public CustomerDetail GetCustomerByContactBL(string contact)
+        {
+            CustomerDetailsDAL customerDetails = new CustomerDetailsDAL();
+            return customerDetails.GetCustomerByContactDAL(contact);
+        }
+    }
+}
+
+--------------------
+ProcurementDetailsBL
+--------------------
+
+using SportsStoreManagementSystem.Entities;
+using SportsStoreManagementSystem.DAL;
+
+namespace SportsStoreManagementSystem.BL
+{
+    public class ProcurementDetailsBL
+    {
+        readonly ProcurementDetailsDAL procureObj = new ProcurementDetailsDAL();
+        
+        public IEnumerable<ProcurementDetail> GetAllProcurementDetailsBL()
+        {
+            return procureObj.GetAllProcurementDetailsDAL();
+        }
+
+        public bool AddProcurementDetailBL(ProcurementDetail procurementDetail)
+        {
+            return procureObj.AddProcurementDetailDAL(procurementDetail);
+        }
+    }
+}
+
+-----------------
+ProductCategoryBL
+-----------------
+
+using SportsStoreManagementSystem.Entities;
+using SportsStoreManagementSystem.DAL;
+
+namespace SportsStoreManagementSystem.BL
+{
+    public class ProductCategoryBL
+    {
+        ProductCategoryDAL productCategoryObj = new ProductCategoryDAL();
+
+        public IEnumerable<ProductCategory> GetAllProductCategoriesBL()
+        {
+            return productCategoryObj.GetAllProductCategoriesDAL();
+        }
+
+        public bool AddProductCategoryBL(ProductCategory productCategory)
+        {
+            return productCategoryObj.AddProductCategoryDAL(productCategory);
+        }
+    }
+}
+
+----------
+ProductsBL
+----------
+
+using SportsStoreManagementSystem.Entities;
+using SportsStoreManagementSystem.DAL;
+
+namespace SportsStoreManagementSystem.BL
+{
+    public class ProductsBL
+    {
+        readonly ProductsDAL productsObj = new ProductsDAL();
+
+        public IEnumerable<Product> GetProductsBL()
+        {
+            return productsObj.GetProductsDAL();
+        }
+
+        public Product GetProductBL(int id)
+        {
+            return productsObj.GetProductDAL(id);
+        }
+
+        public bool PostProductBL(Product product)
+        {
+           return productsObj.PostProductDAL(product);
+        }
+
+        public SportsStoreEnum EditProductsBL(int id, Product product)
+        {
+            return productsObj.EditProductDAL(id, product);
+        }
+
+        public IEnumerable<Product> GetProductsByCategoryInInventoryBL(int categoryId)
+        {
+            return productsObj.GetProductsByCategoryInInventoryDAL(categoryId);
+        }
+
+        public IEnumerable<Product> GetProductsBySupplierBL(int supplierId)
+        {
+            return productsObj.GetProductsBySupplierDAL(supplierId);
+        }
+    }
+}
+
+--------------
+SalesHistoryBL
+--------------
+
+using SportsStoreManagementSystem.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using SportsStoreManagementSystem.DAL;
+
+using Microsoft.EntityFrameworkCore;
+
+namespace SportsStoreManagementSystem.BL
+{
+    public class SalesHistoryBL
+    {
+
+        public IEnumerable<SalesHistory> GetSalesHistoryDetailsBL()
+        {
+           SalesHistoryDAL salesHistory = new SalesHistoryDAL();
+            return salesHistory.GetSalesHistoryDetailsDAL();
+
+        }
+
+        public SalesHistory GetSalesHistoryBL(int id)
+        {
+            SalesHistoryDAL salesHistory = new SalesHistoryDAL();
+            return salesHistory.GetSalesHistoryDAL(id);
+        }
+
+        public void AddSalesHistoryBL(SalesHistory salesHistory)
+        {
+            SalesHistoryDAL salesHistor = new SalesHistoryDAL();
+            salesHistor.AddSalesHistoryDAL(salesHistory);
+        }
+
+        public SportsStoreEnum EditSalesHistoryBL(int id, SalesHistory salesHistory)
+        {
+            SalesHistoryDAL salesHistor = new SalesHistoryDAL();
+            return salesHistor.EditSalesHistoryDAL(id, salesHistory);
+
+        }
+
+    }
+}
+
+-----------------
+SupplierDetailsBL
+-----------------
+
+using SportsStoreManagementSystem.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using SportsStoreManagementSystem.DAL;
+
+namespace SportsStoreManagementSystem.BL
+{
+    public class SupplierDetailsBL
+    {
+        public IEnumerable<SupplierDetail> GetSupplierDetailsBL()
+        {
+            SupplierDetailsDAL supplierDetails = new SupplierDetailsDAL();
+            return supplierDetails.GetSupplierDetailsDAL();
+        }
+
+        public SupplierDetail GetSupplierDetailBL(int id)
+        {
+            SupplierDetailsDAL supplierDetails = new SupplierDetailsDAL();
+            return supplierDetails.GetSupplierDetailDAL(id);
+        }
+
+        public void AddSupplierDetailBL(SupplierDetail supplierDetail)
+        {
+            SupplierDetailsDAL supplierDetails = new SupplierDetailsDAL();
+            supplierDetails.AddSupplierDetailDAL(supplierDetail);
+        }
+
+        public SportsStoreEnum EditSupplierDetailBL(SupplierDetail supplierDetail)
+        {
+            SupplierDetailsDAL supplierDetails = new SupplierDetailsDAL();
+            return supplierDetails.EditSupplierDetailDAL(supplierDetail);
+        }
+
+        public IEnumerable<SupplierDetail> GetSupplierDetailsByProductIdBL(int productId)
+        {
+            SupplierDetailsDAL supplierDetails = new SupplierDetailsDAL();
+            return supplierDetails.GetSupplierDetailsByProductIdDAL(productId);
+        }
+
+    }
+}
