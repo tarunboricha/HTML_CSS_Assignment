@@ -71,3 +71,72 @@ hr {
   border: 0;
   border-top: 1px solid #eaeaea;
 }
+
+
+
+<div class="story-container d-flex flex-column align-items-center p-3">
+  <div class="story-header w-100 d-flex align-items-center justify-content-between mb-4">
+    <h2 class="h5">Stories</h2>
+    <a href="#" class="text-dark">Watch All</a>
+  </div>
+  <div class="story-items d-flex w-100 overflow-auto">
+    <div class="story-item me-3">
+      <div class="story-img-wrapper">
+        <img src="https://via.placeholder.com/80" class="rounded-circle story-img" alt="Story">
+      </div>
+      <p class="text-center mt-2">Username</p>
+    </div>
+    <!-- Repeat the above story-item div for multiple stories -->
+    <div class="story-item me-3">
+      <div class="story-img-wrapper">
+        <img src="https://via.placeholder.com/80" class="rounded-circle story-img" alt="Story">
+      </div>
+      <p class="text-center mt-2">Username</p>
+    </div>
+  </div>
+</div>
+
+
+
+.story-container {
+  background-color: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.story-header {
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 10px;
+}
+
+.story-items {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.story-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.story-img-wrapper {
+  width: 80px;
+  height: 80px;
+  padding: 2px;
+  border: 2px solid #d63384;
+  border-radius: 50%;
+}
+
+.story-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.story-item p {
+  font-size: 0.9rem;
+  color: #333;
+}
