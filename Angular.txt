@@ -270,3 +270,118 @@ export class StoryComponent {
     }
   }
 }
+
+
+
+
+<div class="feed-container p-3">
+  <div class="feed-post mb-4" *ngFor="let post of posts">
+    <div class="post-header d-flex align-items-center mb-3">
+      <img [src]="post.userImg" class="rounded-circle post-user-img" alt="User Image">
+      <div class="ms-3">
+        <h5 class="mb-0">{{ post.username }}</h5>
+        <small class="text-muted">{{ post.timestamp | date: 'short' }}</small>
+      </div>
+    </div>
+    <div class="post-image mb-3">
+      <img [src]="post.postImg" class="img-fluid rounded" alt="Post Image">
+    </div>
+    <div class="post-content">
+      <p>{{ post.content }}</p>
+    </div>
+    <div class="post-actions d-flex justify-content-between mt-3">
+      <button class="btn btn-outline-primary">
+        <i class="bi bi-heart"></i> Like
+      </button>
+      <button class="btn btn-outline-secondary">
+        <i class="bi bi-chat"></i> Comment
+      </button>
+      <button class="btn btn-outline-success">
+        <i class="bi bi-share"></i> Share
+      </button>
+    </div>
+  </div>
+</div>
+
+
+
+.feed-container {
+  background-color: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.feed-post {
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 20px;
+}
+
+.feed-post:last-child {
+  border-bottom: none;
+}
+
+.post-header {
+  align-items: center;
+}
+
+.post-user-img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.post-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.post-content {
+  margin-top: 15px;
+}
+
+.post-actions button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.post-actions i {
+  font-size: 1.2rem;
+}
+
+
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-feed',
+  templateUrl: './feed.component.html',
+  styleUrls: ['./feed.component.css']
+})
+export class FeedComponent {
+  posts = [
+    {
+      userImg: 'https://via.placeholder.com/50',
+      username: 'User1',
+      timestamp: new Date(),
+      postImg: 'https://via.placeholder.com/600x400',
+      content: 'This is a sample post content from User1.'
+    },
+    {
+      userImg: 'https://via.placeholder.com/50',
+      username: 'User2',
+      timestamp: new Date(),
+      postImg: 'https://via.placeholder.com/600x400',
+      content: 'This is a sample post content from User2.'
+    },
+    {
+      userImg: 'https://via.placeholder.com/50',
+      username: 'User3',
+      timestamp: new Date(),
+      postImg: 'https://via.placeholder.com/600x400',
+      content: 'This is a sample post content from User3.'
+    }
+  ];
+}
