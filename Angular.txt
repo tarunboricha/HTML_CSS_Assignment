@@ -140,3 +140,133 @@ hr {
   font-size: 0.9rem;
   color: #333;
 }
+
+
+
+
+
+<div class="story-container d-flex flex-column align-items-center p-3">
+  <div class="story-header w-100 d-flex align-items-center justify-content-between mb-4">
+    <h2 class="h5">Stories</h2>
+    <a href="#" class="text-dark">Watch All</a>
+  </div>
+  <div class="story-items d-flex w-100 overflow-auto">
+    <div class="story-item me-3" *ngFor="let story of stories; let i = index" (click)="openStory(i)">
+      <div class="story-img-wrapper">
+        <img [src]="story.img" class="rounded-circle story-img" alt="Story">
+      </div>
+      <p class="text-center mt-2">{{ story.username }}</p>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="storyModal" tabindex="-1" aria-labelledby="storyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="storyModalLabel">{{ stories[currentStoryIndex]?.username }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img [src]="stories[currentStoryIndex]?.img" class="img-fluid" alt="Story Image">
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <button type="button" class="btn btn-secondary" (click)="prevStory()">Previous</button>
+          <button type="button" class="btn btn-primary" (click)="nextStory()">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+.story-container {
+  background-color: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.story-header {
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 10px;
+}
+
+.story-items {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.story-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.story-img-wrapper {
+  width: 80px;
+  height: 80px;
+  padding: 2px;
+  border: 2px solid #d63384;
+  border-radius: 50%;
+}
+
+.story-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.story-item p {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.modal-content {
+  border-radius: 10px;
+}
+
+
+
+
+
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-story',
+  templateUrl: './story.component.html',
+  styleUrls: ['./story.component.css']
+})
+export class StoryComponent {
+  stories = [
+    { img: 'https://via.placeholder.com/80', username: 'User1' },
+    { img: 'https://via.placeholder.com/80', username: 'User2' },
+    { img: 'https://via.placeholder.com/80', username: 'User3' },
+    { img: 'https://via.placeholder.com/80', username: 'User4' },
+  ];
+  
+  currentStoryIndex: number = 0;
+
+  openStory(index: number) {
+    this.currentStoryIndex = index;
+    const storyModal = new window.bootstrap.Modal(document.getElementById('storyModal'));
+    storyModal.show();
+  }
+
+  prevStory() {
+    if (this.currentStoryIndex > 0) {
+      this.currentStoryIndex--;
+    }
+  }
+
+  nextStory() {
+    if (this.currentStoryIndex < this.stories.length - 1) {
+      this.currentStoryIndex++;
+    }
+  }
+}
