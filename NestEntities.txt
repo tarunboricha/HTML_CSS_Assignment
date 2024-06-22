@@ -1,0 +1,16 @@
+public partial class Story
+{
+    public int Id { get; set; }
+
+    public string? UserName { get; set; }
+
+    public string MediaType { get; set; } = null!;
+
+    public string MediaUrl { get; set; } = null!;
+
+    public string? React { get; set; }
+
+    public DateOnly? AddDate { get; set; }
+
+    public virtual User? UserNameNavigation { get; set; }
+}
