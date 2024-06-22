@@ -1,0 +1,40 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace YourNamespace.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class StoriesController : ControllerBase
+    {
+        private readonly ApplicationDbContext _context;
+
+        public StoriesController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/Stories/username
+        [HttpGet("{username}")]
+        public async Task<ActionResult<IEnumerable<Story>>> GetStoriesByUsername(string username)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                return BadRequest("Username cannot be empty");
+            }
+
+            var stories = await _context.Stories
+                .Where(s => s.UserName == username)
+                .ToListAsync();
+
+            if (stories == null || stories.Count == 0)
+            {
+                return NotFound($"No stories found for user '{username}'");
+            }
+
+            return Ok(stories);
+        }
+    }
+}
