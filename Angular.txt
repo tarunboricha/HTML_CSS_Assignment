@@ -1,0 +1,73 @@
+<nav class="d-flex flex-column align-items-center vh-100 p-3 border-end" style="width: 250px;">
+  <a href="#" class="text-dark text-decoration-none mb-5">
+    <h1 class="h5">BrandName</h1>
+  </a>
+  <ul class="nav nav-pills flex-column mb-auto w-100">
+    <li class="nav-item">
+      <a href="#" class="nav-link text-dark">
+        <i class="bi bi-house-door-fill"></i> Home
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="#" class="nav-link text-dark">
+        <i class="bi bi-compass"></i> Explore
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="#" class="nav-link text-dark">
+        <i class="bi bi-chat-dots-fill"></i> Messages
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="#" class="nav-link text-dark">
+        <i class="bi bi-bell-fill"></i> Notifications
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="#" class="nav-link text-dark">
+        <i class="bi bi-plus-square-fill"></i> Create
+      </a>
+    </li>
+  </ul>
+  <hr class="w-100">
+  <div class="dropdown mt-auto">
+    <a href="#" class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+      <img src="https://via.placeholder.com/30" alt="" width="30" height="30" class="rounded-circle me-2">
+      <strong>Profile</strong>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+      <li><a class="dropdown-item" href="#">Settings</a></li>
+      <li><a class="dropdown-item" href="#">Log out</a></li>
+    </ul>
+  </div>
+</nav>
+
+
+
+nav {
+  background-color: #fff;
+}
+
+nav a.nav-link {
+  font-size: 1.1rem;
+  padding: 10px 15px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+nav a.nav-link:hover {
+  background-color: #f0f0f0;
+  color: #000;
+}
+
+nav a.nav-link i {
+  margin-right: 10px;
+}
+
+nav a.text-dark:hover {
+  color: #000;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid #eaeaea;
+}
