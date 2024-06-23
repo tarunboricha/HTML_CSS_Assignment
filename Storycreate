@@ -1,0 +1,60 @@
+<div class="create-story-container p-4">
+  <h2 class="h5 mb-4">Create Story</h2>
+  <form (ngSubmit)="onSubmit()" #storyForm="ngForm">
+    <div class="mb-3">
+      <label for="mediaUrl" class="form-label">Media URL</label>
+      <input type="url" id="mediaUrl" name="mediaUrl" class="form-control" [(ngModel)]="mediaUrl" required>
+    </div>
+    <div *ngIf="mediaUrl" class="media-preview mb-3">
+      <img [src]="mediaUrl" class="img-fluid rounded" alt="Media Preview" *ngIf="isImage(mediaUrl)">
+      <video [src]="mediaUrl" class="img-fluid rounded" controls *ngIf="isVideo(mediaUrl)"></video>
+    </div>
+    <button type="submit" class="btn btn-primary" [disabled]="!storyForm.form.valid">Add to Story</button>
+  </form>
+</div>
+
+
+
+.create-story-container {
+  background-color: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.media-preview img,
+.media-preview video {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  margin-top: 15px;
+}
+
+
+
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-create-story',
+  templateUrl: './create-story.component.html',
+  styleUrls: ['./create-story.component.css']
+})
+export class CreateStoryComponent {
+  mediaUrl: string = '';
+
+  onSubmit() {
+    if (this.mediaUrl) {
+      // Add the story to your stories array or handle it as needed
+      console.log('Story added:', this.mediaUrl);
+      this.mediaUrl = '';
+    }
+  }
+
+  isImage(url: string): boolean {
+    return url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+  }
+
+  isVideo(url: string): boolean {
+    return url.match(/\.(mp4|webm|ogg)$/) != null;
+  }
+}
