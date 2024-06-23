@@ -1,5 +1,4 @@
-SELECT U.UserName, U.ProfilePicURL, S.MediaUrl FROM Story AS S INNER JOIN Users AS U ON S.UserName = U.UserName;
-
+SELECT U.UserName, U.ProfilePicURL, S.MediaUrl FROM Story AS S INNER JOIN Users AS U ON S.UserName = U.UserName WHERE S.UserName IN (SELECT Following FROM Circle WHERE UserName = 'ravi');
 
 public class StoryService
 {
