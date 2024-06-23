@@ -1,5 +1,10 @@
 SELECT U.UserName, U.ProfilePicURL, S.MediaUrl FROM Story AS S INNER JOIN Users AS U ON S.UserName = U.UserName WHERE S.UserName IN (SELECT Following FROM Circle WHERE UserName = 'ravi');
 
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
 public class StoryService
 {
     private readonly AppDbContext _context;
@@ -9,11 +14,15 @@ public class StoryService
         _context = context;
     }
 
-    public async Task<IEnumerable<StoryWithUserDto>> GetStoriesWithUsersAsync()
+    public async Task<IEnumerable<StoryWithUserDto>> GetStoriesWithUsersAsync(string userName)
     {
         var result = await (from s in _context.Stories
                             join u in _context.Users
                             on s.UserName equals u.UserName
+                            where _context.Circles
+                                .Where(c => c.UserName == userName)
+                                .Select(c => c.Following)
+                                .Contains(s.UserName)
                             select new StoryWithUserDto
                             {
                                 UserName = u.UserName,
