@@ -1,0 +1,92 @@
+import { Component } from '@angular/core';
+import { FileUploadService } from '../file-upload.service';
+
+@Component({
+  selector: 'app-file-upload',
+  templateUrl: './file-upload.component.html',
+  styleUrls: ['./file-upload.component.css']
+})
+export class FileUploadComponent {
+  selectedFile: File | null = null;
+
+  constructor(private fileUploadService: FileUploadService) {}
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedFile = input.files[0];
+    }
+  }
+
+  onUpload() {
+    if (this.selectedFile) {
+      this.fileUploadService.uploadFile(this.selectedFile, 'desired/location/path')
+        .subscribe(response => {
+          console.log('File uploaded successfully', response);
+        }, error => {
+          console.error('File upload failed', error);
+        });
+    }
+  }
+}
+
+
+
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class FileUploadService {
+  private apiUrl = 'http://your-backend-api/upload'; // Your backend API URL
+
+  constructor(private http: HttpClient) {}
+
+  uploadFile(file: File, targetLocation: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('targetLocation', targetLocation);
+
+    const headers = new HttpHeaders({
+      // You can set headers here if needed
+    });
+
+    return this.http.post(this.apiUrl, formData, { headers });
+  }
+}
+
+
+using Microsoft.AspNetCore.Mvc;
+using System.IO;
+using System.Threading.Tasks;
+
+namespace FileUploadApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class FileUploadController : ControllerBase
+    {
+        [HttpPost("upload")]
+        public async Task<IActionResult> Upload([FromForm] IFormFile file, [FromForm] string targetLocation)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded");
+
+            var savePath = Path.Combine(targetLocation, file.FileName);
+
+            if (!Directory.Exists(targetLocation))
+            {
+                Directory.CreateDirectory(targetLocation);
+            }
+
+            using (var stream = new FileStream(savePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return Ok(new { filePath = savePath });
+        }
+    }
+}
