@@ -1,3 +1,5 @@
+SELECT U.UserName, U.ProfilePicURL, S.MediaUrl FROM Story AS S INNER JOIN Users AS U ON S.UserName = U.UserName;
+
 <nav class="d-flex flex-column align-items-center vh-100 p-3 border-end" style="width: 250px;">
   <a href="#" class="text-dark text-decoration-none mb-5">
     <h1 class="h5">BrandName</h1>
