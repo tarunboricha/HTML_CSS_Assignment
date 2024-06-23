@@ -1,0 +1,301 @@
+To accomplish this task, you'll need to set up both the front-end Angular application and a back-end .NET Core Web API to handle file uploads, store the files on the server, and save the URL along with other details in a database.
+
+### Step 1: Set Up the .NET Core Web API
+
+1. **Create a new .NET Core Web API project**:
+   ```bash
+   dotnet new webapi -n FileUploadApi
+   cd FileUploadApi
+   ```
+
+2. **Install necessary packages**:
+   ```bash
+   dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+   dotnet add package Microsoft.EntityFrameworkCore.Tools
+   ```
+
+3. **Create a model for the Story**:
+   Create a `Story.cs` file in the `Models` folder:
+   ```csharp
+   namespace FileUploadApi.Models
+   {
+       public class Story
+       {
+           public int Id { get; set; }
+           public string Username { get; set; }
+           public string MediaType { get; set; }
+           public string MediaUrl { get; set; }
+           public DateTime CreatedAt { get; set; }
+       }
+   }
+   ```
+
+4. **Create a DTO for file uploads**:
+   Create a `StoryDto.cs` file in the `DTOs` folder:
+   ```csharp
+   namespace FileUploadApi.DTOs
+   {
+       public class StoryDto
+       {
+           public string Username { get; set; }
+           public string MediaType { get; set; }
+           public IFormFile File { get; set; }
+       }
+   }
+   ```
+
+5. **Create a DbContext class**:
+   Create a `StoryContext.cs` file in the `Data` folder:
+   ```csharp
+   using Microsoft.EntityFrameworkCore;
+   using FileUploadApi.Models;
+
+   namespace FileUploadApi.Data
+   {
+       public class StoryContext : DbContext
+       {
+           public StoryContext(DbContextOptions<StoryContext> options) : base(options) { }
+
+           public DbSet<Story> Stories { get; set; }
+       }
+   }
+   ```
+
+6. **Update `appsettings.json`**:
+   Configure the connection string for your database:
+   ```json
+   "ConnectionStrings": {
+     "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=FileUploadDb;Trusted_Connection=True;MultipleActiveResultSets=true"
+   }
+   ```
+
+7. **Update `Startup.cs`** to configure services:
+   ```csharp
+   using Microsoft.AspNetCore.Builder;
+   using Microsoft.AspNetCore.Hosting;
+   using Microsoft.EntityFrameworkCore;
+   using Microsoft.Extensions.Configuration;
+   using Microsoft.Extensions.DependencyInjection;
+   using Microsoft.Extensions.Hosting;
+   using FileUploadApi.Data;
+
+   public class Startup
+   {
+       public Startup(IConfiguration configuration)
+       {
+           Configuration = configuration;
+       }
+
+       public IConfiguration Configuration { get; }
+
+       public void ConfigureServices(IServiceCollection services)
+       {
+           services.AddDbContext<StoryContext>(options =>
+               options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+           services.AddControllers();
+           services.AddCors(options =>
+           {
+               options.AddPolicy("AllowAll", builder =>
+               {
+                   builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+               });
+           });
+       }
+
+       public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+       {
+           if (env.IsDevelopment())
+           {
+               app.UseDeveloperExceptionPage();
+           }
+
+           app.UseHttpsRedirection();
+           app.UseRouting();
+           app.UseCors("AllowAll");
+           app.UseAuthorization();
+           app.UseEndpoints(endpoints =>
+           {
+               endpoints.MapControllers();
+           });
+       }
+   }
+   ```
+
+8. **Create the StoriesController**:
+   ```csharp
+   using Microsoft.AspNetCore.Http;
+   using Microsoft.AspNetCore.Mvc;
+   using Microsoft.EntityFrameworkCore;
+   using System.IO;
+   using System.Threading.Tasks;
+   using FileUploadApi.Data;
+   using FileUploadApi.DTOs;
+   using FileUploadApi.Models;
+
+   namespace FileUploadApi.Controllers
+   {
+       [Route("api/[controller]")]
+       [ApiController]
+       public class StoriesController : ControllerBase
+       {
+           private readonly StoryContext _context;
+           private readonly IWebHostEnvironment _env;
+
+           public StoriesController(StoryContext context, IWebHostEnvironment env)
+           {
+               _context = context;
+               _env = env;
+           }
+
+           [HttpPost]
+           public async Task<IActionResult> CreateStory([FromForm] StoryDto storyDto)
+           {
+               if (storyDto.File == null || storyDto.File.Length == 0)
+                   return BadRequest("No file uploaded.");
+
+               var filePath = Path.Combine(_env.WebRootPath, "uploads", storyDto.File.FileName);
+
+               using (var stream = new FileStream(filePath, FileMode.Create))
+               {
+                   await storyDto.File.CopyToAsync(stream);
+               }
+
+               var story = new Story
+               {
+                   Username = storyDto.Username,
+                   MediaType = storyDto.MediaType,
+                   MediaUrl = $"{Request.Scheme}://{Request.Host}/uploads/{storyDto.File.FileName}",
+                   CreatedAt = DateTime.UtcNow
+               };
+
+               _context.Stories.Add(story);
+               await _context.SaveChangesAsync();
+
+               return Ok(new { story.MediaUrl });
+           }
+       }
+   }
+   ```
+
+9. **Update the `Program.cs` to seed the database (optional)**:
+   ```csharp
+   using Microsoft.AspNetCore.Hosting;
+   using Microsoft.Extensions.DependencyInjection;
+   using Microsoft.Extensions.Hosting;
+   using FileUploadApi.Data;
+
+   public class Program
+   {
+       public static void Main(string[] args)
+       {
+           var host = CreateHostBuilder(args).Build();
+
+           using (var scope = host.Services.CreateScope())
+           {
+               var services = scope.ServiceProvider;
+               var context = services.GetRequiredService<StoryContext>();
+               context.Database.EnsureCreated();
+           }
+
+           host.Run();
+       }
+
+       public static IHostBuilder CreateHostBuilder(string[] args) =>
+           Host.CreateDefaultBuilder(args)
+               .ConfigureWebHostDefaults(webBuilder =>
+               {
+                   webBuilder.UseStartup<Startup>();
+               });
+   }
+   ```
+
+### Step 2: Update Angular Component to Handle File Selection and Upload
+
+1. **Generate the Create Story Component**:
+   ```bash
+   ng generate component create-story
+   ```
+
+2. **Update `create-story.component.html`**:
+   ```html
+   <div class="create-story-container p-4">
+     <h2 class="h5 mb-4">Create Story</h2>
+     <form (ngSubmit)="onSubmit()" #storyForm="ngForm">
+       <div class="mb-3">
+         <label for="username" class="form-label">Username</label>
+         <input type="text" id="username" name="username" class="form-control" [(ngModel)]="username" required>
+       </div>
+       <div class="mb-3">
+         <label for="mediaType" class="form-label">Media Type</label>
+         <input type="text" id="mediaType" name="mediaType" class="form-control" [(ngModel)]="mediaType" required>
+       </div>
+       <div class="mb-3">
+         <label for="mediaFile" class="form-label">Select Image</label>
+         <input type="file" id="mediaFile" name="mediaFile" class="form-control" (change)="onFileSelected($event)">
+       </div>
+       <div *ngIf="mediaUrl" class="media-preview mb-3">
+         <img [src]="mediaUrl" class="img-fluid rounded" alt="Media Preview">
+       </div>
+       <button type="submit" class="btn btn-primary" [disabled]="!file">Add to Story</button>
+     </form>
+   </div>
+   ```
+
+3. **Update `create-story.component.css`**:
+   ```css
+   .create-story-container {
+     background-color: #fff;
+     border: 1px solid #eaeaea;
+     border-radius: 8px;
+     padding: 20px;
+   }
+
+   .media-preview img {
+     width: 100%;
+     max-height: 300px;
+     object-fit: cover;
+     margin-top: 15px;
+   }
+   ```
+
+4. **Update `create-story.component.ts`**:
+   ```typescript
+   import { Component } from '@angular/core';
+   import { HttpClient } from '@angular/common/http';
+
+   @Component({
+     selector: 'app-create-story',
+     templateUrl: './create-story.component.html',
+     styleUrls: ['./create-story.component.css']
+   })
+   export class CreateStoryComponent {
+     username: string = '';
+     mediaType: string = '';
+     mediaUrl: string = '';
+     file: File | null = null;
+
+     constructor(private http: HttpClient) {}
+
+     onFileSelected(event: any) {
+       const file: File = event.target.files[0];
+       if (file) {
+         this.file = file;
+         const reader = new FileReader();
+         reader.onload = e => this.mediaUrl = reader.result as string;
+         reader.readAsDataURL(file);
+       }
+     }
+
+     onSubmit() {
+       if (this.file) {
+         const formData = new FormData();
+         formData.append('file', this.file);
+         formData.append('username', this.username);
+         formData.append('mediaType', this.mediaType);
+         
+         this.http.post<{url: string}>('http://localhost:3000/api/stories', formData)
+           .subscribe(response => {
+             this.mediaUrl = response.url;
+             console.log('File stored at:', response.url);
+             this.saveMediaUrl
