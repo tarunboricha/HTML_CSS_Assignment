@@ -58,3 +58,60 @@ export class CreateStoryComponent {
     return url.match(/\.(mp4|webm|ogg)$/) != null;
   }
 }
+
+
+
+
+<div class="create-story-container p-4">
+  <h2 class="h5 mb-4">Create Story</h2>
+  <form (ngSubmit)="onSubmit()" #storyForm="ngForm">
+    <div class="mb-3">
+      <label for="mediaFile" class="form-label">Select Image</label>
+      <input type="file" id="mediaFile" name="mediaFile" class="form-control" (change)="onFileSelected($event)">
+    </div>
+    <div *ngIf="mediaUrl" class="media-preview mb-3">
+      <img [src]="mediaUrl" class="img-fluid rounded" alt="Media Preview">
+    </div>
+    <button type="submit" class="btn btn-primary" [disabled]="!file">Add to Story</button>
+  </form>
+</div>
+
+
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+  selector: 'app-create-story',
+  templateUrl: './create-story.component.html',
+  styleUrls: ['./create-story.component.css']
+})
+export class CreateStoryComponent {
+  mediaUrl: string = '';
+  file: File | null = null;
+
+  constructor(private http: HttpClient) {}
+
+  onFileSelected(event: any) {
+    const file: File = event.target.files[0];
+    if (file) {
+      this.file = file;
+      const reader = new FileReader();
+      reader.onload = e => this.mediaUrl = reader.result as string;
+      reader.readAsDataURL(file);
+    }
+  }
+
+  onSubmit() {
+    if (this.file) {
+      const formData = new FormData();
+      formData.append('file', this.file);
+
+      this.http.post<{url: string}>('http://localhost:3000/upload', formData)
+        .subscribe(response => {
+          this.mediaUrl = response.url;
+          console.log('File stored at:', response.url);
+          this.file = null;
+        });
+    }
+  }
+}
