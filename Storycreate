@@ -110,8 +110,19 @@ export class CreateStoryComponent {
         .subscribe(response => {
           this.mediaUrl = response.url;
           console.log('File stored at:', response.url);
+          this.saveMediaUrlToDatabase(response.url);
           this.file = null;
         });
     }
+  }
+
+  saveMediaUrlToDatabase(url: string) {
+    // This function should handle saving the media URL to your database.
+    // Replace with your own logic as necessary.
+    console.log('Saving URL to database:', url);
+    // Example:
+    // this.http.post('/api/save-url', { url }).subscribe(response => {
+    //   console.log('URL saved to database', response);
+    // });
   }
 }
