@@ -1,5 +1,31 @@
 SELECT U.UserName, U.ProfilePicURL, S.MediaUrl FROM Story AS S INNER JOIN Users AS U ON S.UserName = U.UserName;
 
+
+public class StoryService
+{
+    private readonly AppDbContext _context;
+
+    public StoryService(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IEnumerable<StoryWithUserDto>> GetStoriesWithUsersAsync()
+    {
+        var result = await (from s in _context.Stories
+                            join u in _context.Users
+                            on s.UserName equals u.UserName
+                            select new StoryWithUserDto
+                            {
+                                UserName = u.UserName,
+                                ProfilePicURL = u.ProfilePicURL,
+                                MediaUrl = s.MediaUrl
+                            }).ToListAsync();
+
+        return result;
+    }
+}
+
 <nav class="d-flex flex-column align-items-center vh-100 p-3 border-end" style="width: 250px;">
   <a href="#" class="text-dark text-decoration-none mb-5">
     <h1 class="h5">BrandName</h1>
