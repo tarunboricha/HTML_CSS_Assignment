@@ -54,3 +54,35 @@ public partial class Like
 
     public virtual User? UserNameNavigation { get; set; } = null!;
 }
+
+
+
+
+public class PostInfo
+{
+    public int PostId { get; set; }
+    public string PostUrl { get; set; }
+    public string UserNameOfPost { get; set; }
+    public string UserProfileUrl { get; set; }
+    public int LikesCount { get; set; }
+}
+
+public List<PostInfo> GetFollowedUsersPosts(string currentUserName, DbContext context)
+{
+    var followedUsersPosts = (
+        from circle in context.Circles
+        join post in context.Posts on circle.Following equals post.PostByUser
+        join user in context.Users on post.PostByUser equals user.UserName
+        where circle.UserName == currentUserName
+        select new PostInfo
+        {
+            PostId = post.Id,
+            PostUrl = "https://yourdomain.com/posts/" + post.Id, // Assuming the URL format
+            UserNameOfPost = user.UserName,
+            UserProfileUrl = "https://yourdomain.com/users/" + user.UserName, // Assuming the URL format
+            LikesCount = post.Likes.Count
+        }
+    ).ToList();
+
+    return followedUsersPosts;
+}
