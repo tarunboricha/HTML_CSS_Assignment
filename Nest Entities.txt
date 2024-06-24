@@ -1,0 +1,56 @@
+public partial class Circle
+{
+    public string UserName { get; set; } = null!;
+
+    public string Following { get; set; } = null!;
+
+    public DateOnly? FollowedDate { get; set; }
+
+    public virtual User? FollowingNavigation { get; set; } = null!;
+
+    public virtual User? UserNameNavigation { get; set; } = null!;
+}
+
+public partial class User
+{
+    public string? UserName { get; set; }
+
+    public string? Name { get; set; }
+
+    public virtual ICollection<Circle> CircleUserNameNavigations { get; set; } = new List<Circle>();
+
+    public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
+
+    public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
+}
+
+
+public partial class Post
+{
+    public int Id { get; set; }
+
+    public string? PostByUser { get; set; }
+
+    public string? Caption { get; set; }
+
+    public string? Location { get; set; }
+
+    public DateOnly? PostedAt { get; set; }
+
+    public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
+
+    public virtual User? PostByUserNavigation { get; set; }
+}
+
+public partial class Like
+{
+    public int PostId { get; set; }
+
+    public string UserName { get; set; } = null!;
+
+    public DateOnly? LikedAt { get; set; }
+
+    public virtual Post? Post { get; set; } = null!;
+
+    public virtual User? UserNameNavigation { get; set; } = null!;
+}
