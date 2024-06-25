@@ -190,3 +190,47 @@
   max-height: 400px;
   overflow-y: auto;
 }
+
+
+
+import { Component, OnInit } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+
+interface Post {
+  imgUrl: string;
+}
+
+@Component({
+  selector: 'app-profile',
+  templateUrl: './profile.component.html',
+  styleUrls: ['./profile.component.css']
+})
+export class ProfileComponent implements OnInit {
+  posts: Post[] = [
+    { imgUrl: 'assets/post1.jpg' },
+    { imgUrl: 'assets/post2.jpg' },
+    { imgUrl: 'assets/post3.jpg' },
+    // Add more posts as needed
+  ];
+
+  followers = ['Follower 1', 'Follower 2', 'Follower 3'];
+  following = ['Following 1', 'Following 2', 'Following 3'];
+  
+  modalTitle: string = '';
+  modalList: string[] = [];
+
+  constructor(private modalService: NgbModal) { }
+
+  ngOnInit(): void {}
+
+  openModal(type: string) {
+    this.modalTitle = type.charAt(0).toUpperCase() + type.slice(1);
+    this.modalList = type === 'followers' ? this.followers : this.following;
+
+    const modal = document.getElementById('listModal');
+    if (modal) {
+      const modalInstance = new bootstrap.Modal(modal);
+      modalInstance.show();
+    }
+  }
+}
