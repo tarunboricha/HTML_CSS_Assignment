@@ -61,3 +61,159 @@ public class CommentService
   </div>
 </div>
 
+
+
+
+/* General styles for the comments section */
+.comments-section {
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles for individual comments */
+.comment {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* User info section */
+.comment-user {
+  display: flex;
+  align-items: center;
+  margin-right: 15px;
+}
+
+/* User profile image */
+.comment-user img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+/* Comment text */
+.comment-text {
+  flex: 1;
+}
+
+/* Comment date */
+.comment-date {
+  color: #888;
+  font-size: 0.85em;
+  margin-top: 5px;
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 768px) {
+  .comments-section {
+    padding: 10px;
+  }
+  
+  .comment {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .comment-user {
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .comment-user img {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .comment-text {
+    font-size: 0.95em;
+  }
+}
+
+
+
+/* Button to open comments modal */
+.show-comments-btn {
+  margin-bottom: 15px;
+}
+
+/* Bootstrap modal customization */
+.modal-content {
+  border-radius: 10px;
+}
+
+.modal-header {
+  border-bottom: none;
+}
+
+.modal-title {
+  font-weight: bold;
+}
+
+.close {
+  font-size: 1.5rem;
+}
+
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Responsive styles for modal */
+@media (max-width: 768px) {
+  .modal-body {
+    max-height: 60vh;
+  }
+}
+
+@media (max-width: 576px) {
+  .modal-body {
+    max-height: 50vh;
+  }
+}
+
+
+
+<div class="comments-section">
+  <div *ngFor="let comment of comments" class="comment">
+    <div class="comment-user">
+      <img [src]="comment.userProfileUrl" alt="{{ comment.userName }}">
+      <span>{{ comment.userName }}</span>
+    </div>
+    <div class="comment-text">
+      <p>{{ comment.commentText }}</p>
+    </div>
+    <div class="comment-date">
+      <small>{{ comment.commentedAt | date }}</small>
+    </div>
+  </div>
+</div>
+
+
+
+<button type="button" class="btn btn-primary show-comments-btn" data-toggle="modal" data-target="#commentsModal" (click)="loadComments(postId)">
+  Show Comments
+</button>
+
+<div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="commentsModalLabel">Comments</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <app-comments [postId]="selectedPostId"></app-comments>
+      </div>
+    </div>
+  </div>
+</div>
