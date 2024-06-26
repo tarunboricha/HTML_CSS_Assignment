@@ -1,0 +1,118 @@
+<div class="container mt-4">
+  <div *ngFor="let notification of notifications" class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">{{notification.message}}</h5>
+      <p class="card-text">
+        <button class="btn btn-success" (click)="acceptRequest(notification.id)" *ngIf="notification.status === 'pending'">
+          Accept
+        </button>
+        <button class="btn btn-danger" (click)="rejectRequest(notification.id)" *ngIf="notification.status === 'pending'">
+          Reject
+        </button>
+        <span class="badge badge-info" *ngIf="notification.status === 'accepted'">Accepted</span>
+        <span class="badge badge-secondary" *ngIf="notification.status === 'rejected'">Rejected</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+
+
+.card {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transition: 0.3s;
+}
+
+.card:hover {
+  box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+}
+
+.card-title {
+  font-size: 1.25rem;
+}
+
+.card-text {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+<div class="container mt-4">
+  <div *ngFor="let notification of notifications" class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">{{notification.message}}</h5>
+      <p class="card-text">
+        <button class="btn btn-success" (click)="open(content, notification.id, 'Accept')" *ngIf="notification.status === 'pending'">
+          Accept
+        </button>
+        <button class="btn btn-danger" (click)="open(content, notification.id, 'Reject')" *ngIf="notification.status === 'pending'">
+          Reject
+        </button>
+        <span class="badge badge-info" *ngIf="notification.status === 'accepted'">Accepted</span>
+        <span class="badge badge-secondary" *ngIf="notification.status === 'rejected'">Rejected</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<ng-template #content let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Confirmation</h4>
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    Are you sure you want to {{ modalService.activeInstances[0] }} this request?
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="modal.dismiss('Cancel click')">Cancel</button>
+    <button type="button" class="btn btn-success" (click)="modal.close('Accept')">Accept</button>
+    <button type="button" class="btn btn-danger" (click)="modal.close('Reject')">Reject</button>
+  </div>
+</ng-template>
+
+
+
+
+import { Component, OnInit } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NotificationService } from '../notification.service';
+
+@Component({
+  selector: 'app-notification',
+  templateUrl: './notification.component.html',
+  styleUrls: ['./notification.component.css']
+})
+export class NotificationComponent implements OnInit {
+  notifications: any[] = [];
+  userId: number = 2; // Assuming current logged in user is User2
+
+  constructor(private notificationService: NotificationService, private modalService: NgbModal) { }
+
+  ngOnInit(): void {
+    this.notifications = this.notificationService.getNotificationsForUser(this.userId);
+  }
+
+  open(content, notificationId: number, action: string) {
+    this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title' }).result.then((result) => {
+      if (result === 'Accept') {
+        this.acceptRequest(notificationId);
+      } else if (result === 'Reject') {
+        this.rejectRequest(notificationId);
+      }
+    });
+  }
+
+  acceptRequest(notificationId: number) {
+    this.notificationService.updateNotificationStatus(notificationId, 'accepted');
+    this.notifications = this.notificationService.getNotificationsForUser(this.userId);
+  }
+
+  rejectRequest(notificationId: number) {
+    this.notificationService.updateNotificationStatus(notificationId, 'rejected');
+    this.notifications = this.notificationService.getNotificationsForUser(this.userId);
+  }
+}
