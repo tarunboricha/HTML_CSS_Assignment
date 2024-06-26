@@ -11,7 +11,7 @@ public class SuggestionsController : ControllerBase
     }
 
     [HttpGet("{userName}")]
-    public async Task<ActionResult<IEnumerable<User>>> GetSuggestions(string userName)
+    public async Task<ActionResult<IEnumerable<UserSuggestionDto>>> GetSuggestions(string userName)
     {
         var user = await _context.Users
                                  .Include(u => u.Followings)
@@ -27,6 +27,11 @@ public class SuggestionsController : ControllerBase
 
         var suggestions = await _context.Users
                                         .Where(u => u.UserName != userName && !followedUserNames.Contains(u.UserName))
+                                        .Select(u => new UserSuggestionDto
+                                        {
+                                            UserName = u.UserName,
+                                            ProfileUrl = u.ProfileUrl // Assuming ProfileUrl is a property in User model
+                                        })
                                         .ToListAsync();
 
         return Ok(suggestions);
