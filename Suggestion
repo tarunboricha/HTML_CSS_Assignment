@@ -1,0 +1,34 @@
+// Controllers/SuggestionsController.cs
+[Route("api/[controller]")]
+[ApiController]
+public class SuggestionsController : ControllerBase
+{
+    private readonly ApplicationDbContext _context;
+
+    public SuggestionsController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    [HttpGet("{userName}")]
+    public async Task<ActionResult<IEnumerable<User>>> GetSuggestions(string userName)
+    {
+        var user = await _context.Users
+                                 .Include(u => u.Followings)
+                                 .ThenInclude(c => c.FollowingNavigation)
+                                 .FirstOrDefaultAsync(u => u.UserName == userName);
+        
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        var followedUserNames = user.Followings.Select(f => f.Following).ToList();
+
+        var suggestions = await _context.Users
+                                        .Where(u => u.UserName != userName && !followedUserNames.Contains(u.UserName))
+                                        .ToListAsync();
+
+        return Ok(suggestions);
+    }
+}
