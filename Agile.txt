@@ -1,65 +1,161 @@
-# Agile and Scrum Basics: A Simple Guide
+Sure, here's a simple explanation of each of the 12 principles behind the Agile Manifesto and the details for each section requested earlier.
 
-## Agile Manifesto
-The Agile Manifesto is a set of values and principles to help teams work more efficiently and deliver better software. It has four main values:
-1. **Individuals and interactions over processes and tools.**
-2. **Working software over comprehensive documentation.**
-3. **Customer collaboration over contract negotiation.**
-4. **Responding to change over following a plan.**
+### 12 Principles of Agile
+1. **Customer satisfaction through early and continuous delivery**:
+   - Deliver software frequently to satisfy customers.
+   - Get feedback and make improvements quickly.
 
-## Agile Principles
-There are 12 principles behind the Agile Manifesto. Here are a few key ones:
-1. **Customer satisfaction** through early and continuous delivery of valuable software.
-2. **Welcome changing requirements**, even late in development.
-3. **Deliver working software frequently**, from a couple of weeks to a couple of months.
-4. **Close, daily cooperation** between business people and developers.
-5. **Motivated individuals** are the foundation of projects. Give them the environment and support they need.
+2. **Welcome changing requirements**:
+   - Be open to changes, even late in the project.
+   - Flexibility allows for a better product.
 
-## Scrum Values
-Scrum is an Agile framework, and it has five core values:
-1. **Commitment** - Be dedicated to your team's goals.
-2. **Focus** - Concentrate on the work at hand.
-3. **Openness** - Be open about all the work and the challenges.
-4. **Respect** - Respect each other to work together well.
-5. **Courage** - Have the courage to do the right thing and tackle tough problems.
+3. **Deliver working software frequently**:
+   - Deliver small, functional pieces of software regularly (every few weeks).
+   - This ensures steady progress and constant feedback.
 
-## Scrum Pillars
-Scrum is built on three main pillars:
-1. **Transparency** - Everyone should understand the process and the work being done.
-2. **Inspection** - Regularly check the progress towards goals.
-3. **Adaptation** - Be willing to change plans based on inspections.
+4. **Business people and developers must work together daily**:
+   - Close, daily collaboration ensures everyone is on the same page.
+   - Helps quickly resolve issues and make decisions.
 
-## User Stories
-User stories describe features from an end-user perspective. They typically follow this format:
-"As a [type of user], I want [an action] so that [a benefit]."
+5. **Build projects around motivated individuals**:
+   - Give team members the environment and support they need.
+   - Trust them to get the job done.
 
-## Sprint
-A Sprint is a time-boxed period (usually 2-4 weeks) where a Scrum team works to complete a set amount of work. At the end of the Sprint, the team should have a potentially shippable product increment.
+6. **Face-to-face conversation**:
+   - The most efficient and effective way to communicate.
+   - Encourages quick feedback and collaboration.
 
-## Velocity
-Velocity measures how much work a team can complete in a Sprint. It's calculated by adding up the points for all completed user stories in the Sprint.
+7. **Working software is the primary measure of progress**:
+   - Focus on delivering functional software.
+   - More important than extensive documentation.
 
-## Roles in Scrum
-Scrum has three main roles:
-1. **Product Owner** - Manages the product backlog and ensures the team delivers value to the business.
-2. **Scrum Master** - Facilitates the Scrum process, helps the team stay focused, and removes obstacles.
-3. **Development Team** - Does the work to build the product increment.
+8. **Sustainable development**:
+   - Maintain a constant pace.
+   - Avoid burnout by working at a steady, manageable speed.
 
-## Scrum Process
-The Scrum process includes:
-1. **Product Backlog** - A prioritized list of user stories and tasks.
-2. **Sprint Planning** - Meeting to decide what work will be done in the Sprint.
-3. **Daily Scrum** - Short daily meeting to sync up and plan the day’s work.
-4. **Sprint Review** - Meeting at the end of the Sprint to show what’s been done.
-5. **Sprint Retrospective** - Meeting to discuss what went well, what didn't, and how to improve.
+9. **Continuous attention to technical excellence and good design**:
+   - Strive for high quality and good design.
+   - Makes the product easier to maintain and extend.
 
-## INVEST Model
-The INVEST model helps create good user stories. It stands for:
-- **Independent** - Stories should be self-contained.
-- **Negotiable** - Details can be changed through collaboration.
-- **Valuable** - Each story should deliver value to the user.
-- **Estimable** - Stories should be able to be estimated in terms of effort.
-- **Small** - Stories should be small enough to be completed in a Sprint.
-- **Testable** - There should be a clear way to test if the story is complete.
+10. **Simplicity**:
+    - Maximize the amount of work not done.
+    - Focus on the essentials.
 
-This guide covers the basics of Agile and Scrum in simple terms. It's a starting point to help you understand how to work effectively in an Agile environment.
+11. **Self-organizing teams**:
+    - Teams should organize themselves and make decisions.
+    - Leads to more innovation and better problem-solving.
+
+12. **Regular reflection and adjustment**:
+    - Regularly review how to become more effective.
+    - Make adjustments to improve continuously.
+
+### Scrum Values
+1. **Commitment**:
+   - Everyone is dedicated to achieving the goals of the team.
+   - Team members do their best work.
+
+2. **Focus**:
+   - Everyone focuses on the work of the Sprint.
+   - Helps ensure the team completes their goals.
+
+3. **Openness**:
+   - Team members are open about their work and any challenges they face.
+   - Promotes transparency and trust.
+
+4. **Respect**:
+   - Team members respect each other.
+   - Encourages a positive and collaborative working environment.
+
+5. **Courage**:
+   - Team members have the courage to do the right thing.
+   - They tackle difficult problems and make tough decisions.
+
+### Scrum Pillars
+1. **Transparency**:
+   - All aspects of the process must be visible to those responsible for the outcome.
+   - Ensures everyone has a common understanding of the work.
+
+2. **Inspection**:
+   - Regularly check progress toward a Sprint Goal.
+   - Detect and correct variances early.
+
+3. **Adaptation**:
+   - Adjust processes as needed to minimize deviation.
+   - Continuous improvement based on feedback.
+
+### User Stories
+User stories describe what a user needs in a simple format:
+- **Format**: "As a [type of user], I want [an action] so that [a benefit]."
+- **Example**: "As a shopper, I want to filter products by price so that I can find items within my budget."
+
+### Sprint
+A Sprint is a short, fixed period (2-4 weeks) during which a Scrum team works to complete specific tasks. 
+- **Key Activities**: 
+  - Plan work at the beginning.
+  - Work on tasks during the Sprint.
+  - Review work at the end.
+
+### Velocity
+Velocity measures how much work a team can complete in a Sprint.
+- **How to Measure**: 
+  - Add up the points for all completed user stories.
+  - Use this to predict future work capacity.
+
+### Roles in Scrum
+1. **Product Owner**:
+   - Manages the product backlog.
+   - Prioritizes work to deliver maximum value.
+
+2. **Scrum Master**:
+   - Facilitates Scrum processes.
+   - Helps the team stay focused and removes obstacles.
+
+3. **Development Team**:
+   - Does the work to create the product.
+   - Cross-functional and self-organizing.
+
+### Scrum Process
+1. **Product Backlog**:
+   - A list of all desired work on the project.
+   - Prioritized by the Product Owner.
+
+2. **Sprint Planning**:
+   - Meeting to decide what to complete in the Sprint.
+   - Team selects items from the Product Backlog.
+
+3. **Daily Scrum**:
+   - Short, daily meeting (usually 15 minutes).
+   - Team members share progress, plans, and any blockers.
+
+4. **Sprint Review**:
+   - Meeting at the end of the Sprint to showcase completed work.
+   - Team gets feedback from stakeholders.
+
+5. **Sprint Retrospective**:
+   - Meeting to reflect on the Sprint.
+   - Discuss what went well, what didn’t, and how to improve.
+
+### INVEST Model
+INVEST helps create effective user stories:
+- **Independent**:
+  - Stories should be self-contained.
+  - Can be developed separately from others.
+
+- **Negotiable**:
+  - Stories should be flexible.
+  - Details can change based on collaboration.
+
+- **Valuable**:
+  - Each story should provide value to the user or customer.
+
+- **Estimable**:
+  - Stories should be able to be estimated for effort.
+  - Helps with planning and prioritization.
+
+- **Small**:
+  - Stories should be small enough to be completed in a Sprint.
+
+- **Testable**:
+  - There should be a clear way to test if the story is complete.
+
+This detailed explanation covers all the key points about Agile and Scrum in simple language.
