@@ -1,1 +1,65 @@
-agile manifesto, principle, scrum values, scrum pillars, user stories, sprint, velocity,roles in scrum,scrum process, invest model
+# Agile and Scrum Basics: A Simple Guide
+
+## Agile Manifesto
+The Agile Manifesto is a set of values and principles to help teams work more efficiently and deliver better software. It has four main values:
+1. **Individuals and interactions over processes and tools.**
+2. **Working software over comprehensive documentation.**
+3. **Customer collaboration over contract negotiation.**
+4. **Responding to change over following a plan.**
+
+## Agile Principles
+There are 12 principles behind the Agile Manifesto. Here are a few key ones:
+1. **Customer satisfaction** through early and continuous delivery of valuable software.
+2. **Welcome changing requirements**, even late in development.
+3. **Deliver working software frequently**, from a couple of weeks to a couple of months.
+4. **Close, daily cooperation** between business people and developers.
+5. **Motivated individuals** are the foundation of projects. Give them the environment and support they need.
+
+## Scrum Values
+Scrum is an Agile framework, and it has five core values:
+1. **Commitment** - Be dedicated to your team's goals.
+2. **Focus** - Concentrate on the work at hand.
+3. **Openness** - Be open about all the work and the challenges.
+4. **Respect** - Respect each other to work together well.
+5. **Courage** - Have the courage to do the right thing and tackle tough problems.
+
+## Scrum Pillars
+Scrum is built on three main pillars:
+1. **Transparency** - Everyone should understand the process and the work being done.
+2. **Inspection** - Regularly check the progress towards goals.
+3. **Adaptation** - Be willing to change plans based on inspections.
+
+## User Stories
+User stories describe features from an end-user perspective. They typically follow this format:
+"As a [type of user], I want [an action] so that [a benefit]."
+
+## Sprint
+A Sprint is a time-boxed period (usually 2-4 weeks) where a Scrum team works to complete a set amount of work. At the end of the Sprint, the team should have a potentially shippable product increment.
+
+## Velocity
+Velocity measures how much work a team can complete in a Sprint. It's calculated by adding up the points for all completed user stories in the Sprint.
+
+## Roles in Scrum
+Scrum has three main roles:
+1. **Product Owner** - Manages the product backlog and ensures the team delivers value to the business.
+2. **Scrum Master** - Facilitates the Scrum process, helps the team stay focused, and removes obstacles.
+3. **Development Team** - Does the work to build the product increment.
+
+## Scrum Process
+The Scrum process includes:
+1. **Product Backlog** - A prioritized list of user stories and tasks.
+2. **Sprint Planning** - Meeting to decide what work will be done in the Sprint.
+3. **Daily Scrum** - Short daily meeting to sync up and plan the day’s work.
+4. **Sprint Review** - Meeting at the end of the Sprint to show what’s been done.
+5. **Sprint Retrospective** - Meeting to discuss what went well, what didn't, and how to improve.
+
+## INVEST Model
+The INVEST model helps create good user stories. It stands for:
+- **Independent** - Stories should be self-contained.
+- **Negotiable** - Details can be changed through collaboration.
+- **Valuable** - Each story should deliver value to the user.
+- **Estimable** - Stories should be able to be estimated in terms of effort.
+- **Small** - Stories should be small enough to be completed in a Sprint.
+- **Testable** - There should be a clear way to test if the story is complete.
+
+This guide covers the basics of Agile and Scrum in simple terms. It's a starting point to help you understand how to work effectively in an Agile environment.
