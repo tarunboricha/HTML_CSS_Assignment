@@ -1,40 +1,55 @@
-To check a specific header in every API request in your .NET Core Web API, you can use middleware. Middleware is a software component that's assembled into an application pipeline to handle requests and responses. Here's how you can create custom middleware to check for a specific header in every request:
+To ensure that your API does not proceed if a specific header is missing, you need to stop the request pipeline when the header is not present. The middleware you created already handles this by returning a `400 Bad Request` response and stopping the request processing. Here is a detailed and clarified version of the steps you need to follow:
 
-1. **Create the Middleware:**
+1. **Create a Middleware Folder:**
 
-   First, create a new middleware class. This class will check for the header in every request.
+   In your .NET Core project, create a new folder named `Middleware` to keep your middleware classes organized.
+
+2. **Add the Middleware Class:**
+
+   Inside the `Middleware` folder, create a new C# class file named `HeaderCheckMiddleware.cs`.
+
+3. **Implement the Middleware Logic:**
+
+   Open the `HeaderCheckMiddleware.cs` file and add the following code:
 
    ```csharp
    using Microsoft.AspNetCore.Http;
    using System.Threading.Tasks;
 
-   public class HeaderCheckMiddleware
+   namespace YourNamespace.Middleware
    {
-       private readonly RequestDelegate _next;
-
-       public HeaderCheckMiddleware(RequestDelegate next)
+       public class HeaderCheckMiddleware
        {
-           _next = next;
-       }
+           private readonly RequestDelegate _next;
 
-       public async Task InvokeAsync(HttpContext context)
-       {
-           if (!context.Request.Headers.TryGetValue("Your-Header-Name", out var headerValue))
+           public HeaderCheckMiddleware(RequestDelegate next)
            {
-               context.Response.StatusCode = StatusCodes.Status400BadRequest;
-               await context.Response.WriteAsync("Header missing.");
-               return;
+               _next = next;
            }
 
-           // Proceed to the next middleware in the pipeline
-           await _next(context);
+           public async Task InvokeAsync(HttpContext context)
+           {
+               // Check if the specified header is present
+               if (!context.Request.Headers.TryGetValue("Your-Header-Name", out var headerValue))
+               {
+                   // If the header is missing, set the response status code to 400 Bad Request
+                   context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                   await context.Response.WriteAsync("Header missing.");
+                   return; // Stop further processing of the request
+               }
+
+               // If the header is present, proceed to the next middleware in the pipeline
+               await _next(context);
+           }
        }
    }
    ```
 
-2. **Register the Middleware:**
+   Replace `YourNamespace` with the actual namespace of your project. Make sure to replace `"Your-Header-Name"` with the name of the header you want to check.
 
-   Next, register your custom middleware in the `Startup.cs` file. This is where you configure the HTTP request pipeline.
+4. **Register the Middleware in Startup.cs:**
+
+   Open the `Startup.cs` file in the root of your project and modify it to register your custom middleware.
 
    ```csharp
    using Microsoft.AspNetCore.Builder;
@@ -42,6 +57,7 @@ To check a specific header in every API request in your .NET Core Web API, you c
    using Microsoft.Extensions.Configuration;
    using Microsoft.Extensions.DependencyInjection;
    using Microsoft.Extensions.Hosting;
+   using YourNamespace.Middleware;
 
    public class Startup
    {
@@ -81,8 +97,8 @@ To check a specific header in every API request in your .NET Core Web API, you c
    }
    ```
 
-In the above example, the `HeaderCheckMiddleware` checks for the presence of "Your-Header-Name" in each request. If the header is missing, it sets the response status code to `400 Bad Request` and returns a message indicating the missing header.
+5. **Run Your Application:**
 
-If the header is present, the request proceeds to the next middleware component in the pipeline, ultimately reaching your controllers.
+   Start your application. The middleware will now check for the specified header in every incoming request. If the header is missing, it will return a `400 Bad Request` response with a message indicating the missing header, and no further processing will occur.
 
-This approach ensures that every request to your API is checked for the specified header before reaching any controller action.
+By following these steps, you ensure that if the specified header is missing from any request, your API will not proceed, and the client will receive a `400 Bad Request` response.
