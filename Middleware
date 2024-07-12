@@ -1,0 +1,88 @@
+To check a specific header in every API request in your .NET Core Web API, you can use middleware. Middleware is a software component that's assembled into an application pipeline to handle requests and responses. Here's how you can create custom middleware to check for a specific header in every request:
+
+1. **Create the Middleware:**
+
+   First, create a new middleware class. This class will check for the header in every request.
+
+   ```csharp
+   using Microsoft.AspNetCore.Http;
+   using System.Threading.Tasks;
+
+   public class HeaderCheckMiddleware
+   {
+       private readonly RequestDelegate _next;
+
+       public HeaderCheckMiddleware(RequestDelegate next)
+       {
+           _next = next;
+       }
+
+       public async Task InvokeAsync(HttpContext context)
+       {
+           if (!context.Request.Headers.TryGetValue("Your-Header-Name", out var headerValue))
+           {
+               context.Response.StatusCode = StatusCodes.Status400BadRequest;
+               await context.Response.WriteAsync("Header missing.");
+               return;
+           }
+
+           // Proceed to the next middleware in the pipeline
+           await _next(context);
+       }
+   }
+   ```
+
+2. **Register the Middleware:**
+
+   Next, register your custom middleware in the `Startup.cs` file. This is where you configure the HTTP request pipeline.
+
+   ```csharp
+   using Microsoft.AspNetCore.Builder;
+   using Microsoft.AspNetCore.Hosting;
+   using Microsoft.Extensions.Configuration;
+   using Microsoft.Extensions.DependencyInjection;
+   using Microsoft.Extensions.Hosting;
+
+   public class Startup
+   {
+       public Startup(IConfiguration configuration)
+       {
+           Configuration = configuration;
+       }
+
+       public IConfiguration Configuration { get; }
+
+       public void ConfigureServices(IServiceCollection services)
+       {
+           services.AddControllers();
+       }
+
+       public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+       {
+           if (env.IsDevelopment())
+           {
+               app.UseDeveloperExceptionPage();
+           }
+
+           app.UseHttpsRedirection();
+
+           app.UseRouting();
+
+           app.UseAuthorization();
+
+           // Add the custom middleware here
+           app.UseMiddleware<HeaderCheckMiddleware>();
+
+           app.UseEndpoints(endpoints =>
+           {
+               endpoints.MapControllers();
+           });
+       }
+   }
+   ```
+
+In the above example, the `HeaderCheckMiddleware` checks for the presence of "Your-Header-Name" in each request. If the header is missing, it sets the response status code to `400 Bad Request` and returns a message indicating the missing header.
+
+If the header is present, the request proceeds to the next middleware component in the pipeline, ultimately reaching your controllers.
+
+This approach ensures that every request to your API is checked for the specified header before reaching any controller action.
