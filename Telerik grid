@@ -1,0 +1,16 @@
+protected void RadGrid1_ItemDataBound(object sender, Telerik.Web.UI.GridItemEventArgs e)
+{
+    if (e.Item is GridDataItem)
+    {
+        GridDataItem dataItem = (GridDataItem)e.Item;
+        LinkButton lnkAction = (LinkButton)dataItem.FindControl("lnkAction");
+
+        // Your condition here
+        bool someCondition = /* condition logic */;
+
+        if (someCondition)
+        {
+            lnkAction.Enabled = false; // Disable LinkButton based on condition
+        }
+    }
+}
