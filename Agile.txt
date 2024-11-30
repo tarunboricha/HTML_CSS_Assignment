@@ -159,3 +159,93 @@ INVEST helps create effective user stories:
   - There should be a clear way to test if the story is complete.
 
 This detailed explanation covers all the key points about Agile and Scrum in simple language.
+
+
+
+
+using OpenQA.Selenium;
+using System;
+using System.IO;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.Layout.Properties;
+
+public class TableToPdfConverter
+{
+    public static void ConvertTableToPdf(IWebElement parentTable, string outputFilePath)
+    {
+        try
+        {
+            using (PdfWriter writer = new PdfWriter(outputFilePath))
+            {
+                using (PdfDocument pdf = new PdfDocument(writer))
+                {
+                    Document document = new Document(pdf);
+
+                    // Add title to the document
+                    document.Add(new Paragraph("Table Export")
+                        .SetBold()
+                        .SetFontSize(16)
+                        .SetTextAlignment(TextAlignment.CENTER)
+                        .SetMarginBottom(20));
+
+                    // Process the parent table
+                    ProcessTable(parentTable, document, 0);
+
+                    // Close the document
+                    document.Close();
+                }
+            }
+
+            Console.WriteLine($"PDF created successfully at {outputFilePath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while creating the PDF: {ex.Message}");
+        }
+    }
+
+    private static void ProcessTable(IWebElement table, Document document, int level)
+    {
+        // Get table headers (if any)
+        var headers = table.FindElements(By.TagName("th"));
+
+        // Count the number of columns
+        int columnCount = headers.Count > 0 ? headers.Count : table.FindElements(By.TagName("tr"))[0]
+            .FindElements(By.TagName("td")).Count;
+
+        // Create a table for the PDF
+        iText.Layout.Element.Table pdfTable = new iText.Layout.Element.Table(columnCount);
+        pdfTable.SetMarginLeft(level * 20); // Indent nested tables
+
+        // Add headers to the table
+        foreach (var header in headers)
+        {
+            pdfTable.AddHeaderCell(new Cell().Add(new Paragraph(header.Text).SetBold()));
+        }
+
+        // Process rows
+        foreach (var row in table.FindElements(By.TagName("tr")))
+        {
+            foreach (var cell in row.FindElements(By.TagName("td")))
+            {
+                // Check if the cell contains a nested table
+                var nestedTable = cell.FindElements(By.TagName("table"));
+                if (nestedTable.Count > 0)
+                {
+                    // Add nested table recursively
+                    ProcessTable(nestedTable[0], document, level + 1);
+                }
+                else
+                {
+                    // Add cell content
+                    pdfTable.AddCell(new Cell().Add(new Paragraph(cell.Text)));
+                }
+            }
+        }
+
+        // Add the processed table to the document
+        document.Add(pdfTable);
+    }
+}
