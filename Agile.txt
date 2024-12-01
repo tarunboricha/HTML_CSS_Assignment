@@ -249,3 +249,107 @@ public class TableToPdfConverter
         document.Add(pdfTable);
     }
 }
+
+
+
+
+
+
+
+
+--------------
+--------------
+
+
+
+using OpenQA.Selenium;
+using PdfSharp.Pdf;
+using PdfSharp.Drawing;
+using System;
+
+public class TableToPdfConverterWithPdfSharp
+{
+    public static void ConvertTableToPdf(IWebElement parentTable, string outputFilePath)
+    {
+        try
+        {
+            // Create a new PDF document
+            PdfDocument document = new PdfDocument();
+            document.Info.Title = "Table Export";
+
+            // Add a page to the PDF
+            PdfPage page = document.AddPage();
+            XGraphics gfx = XGraphics.FromPdfPage(page);
+
+            // Set initial coordinates
+            double x = 20; // Left margin
+            double y = 40; // Top margin
+            double lineHeight = 15; // Line height for rows
+
+            // Add a title
+            XFont titleFont = new XFont("Verdana", 16, XFontStyle.Bold);
+            gfx.DrawString("Table Export", titleFont, XBrushes.Black, new XPoint(page.Width / 2, y), XStringFormats.TopCenter);
+            y += 40;
+
+            // Process the parent table
+            ProcessTable(parentTable, gfx, page, ref x, ref y, lineHeight, 0);
+
+            // Save the document
+            document.Save(outputFilePath);
+            Console.WriteLine($"PDF created successfully at {outputFilePath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while creating the PDF: {ex.Message}");
+        }
+    }
+
+    private static void ProcessTable(IWebElement table, XGraphics gfx, PdfPage page, ref double x, ref double y, double lineHeight, int level)
+    {
+        // Indent based on the nesting level
+        double indent = level * 20;
+
+        // Add table headers (if available)
+        var headers = table.FindElements(By.TagName("th"));
+        if (headers.Count > 0)
+        {
+            XFont headerFont = new XFont("Verdana", 12, XFontStyle.Bold);
+            foreach (var header in headers)
+            {
+                gfx.DrawString(header.Text, headerFont, XBrushes.Black, new XPoint(x + indent, y));
+                y += lineHeight;
+            }
+        }
+
+        // Process rows
+        var rows = table.FindElements(By.TagName("tr"));
+        XFont cellFont = new XFont("Verdana", 10, XFontStyle.Regular);
+        foreach (var row in rows)
+        {
+            foreach (var cell in row.FindElements(By.TagName("td")))
+            {
+                // Check for nested tables
+                var nestedTable = cell.FindElements(By.TagName("table"));
+                if (nestedTable.Count > 0)
+                {
+                    // Recursively process the nested table
+                    ProcessTable(nestedTable[0], gfx, page, ref x, ref y, lineHeight, level + 1);
+                }
+                else
+                {
+                    // Add the cell text
+                    gfx.DrawString(cell.Text, cellFont, XBrushes.Black, new XPoint(x + indent, y));
+                    y += lineHeight;
+
+                    // Move to the next page if the y-coordinate exceeds the page height
+                    if (y > page.Height - 40)
+                    {
+                        page = page.Owner.AddPage();
+                        gfx = XGraphics.FromPdfPage(page);
+                        y = 40; // Reset y-coordinate for the new page
+                    }
+                }
+            }
+        }
+    }
+}
