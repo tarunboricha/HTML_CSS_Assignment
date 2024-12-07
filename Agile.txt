@@ -353,3 +353,88 @@ public class TableToPdfConverterWithPdfSharp
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+using OpenQA.Selenium;
+
+public void CreateShadowBootstrapTable(IWebDriver driver, string parentDivSelector, string theadSelector, string tbodySelector)
+{
+    // JavaScript to inject Shadow DOM and create the Bootstrap table
+    string script = $@"
+        (function() {{
+            const parentDiv = document.querySelector('{parentDivSelector}');
+            if (!parentDiv) {{
+                throw new Error('Parent div not found: {parentDivSelector}');
+            }}
+
+            // Create Shadow Root
+            const shadowRoot = parentDiv.attachShadow({{ mode: 'open' }});
+
+            // Fetch the original thead and tbody content
+            const originalThead = document.querySelector('{theadSelector}');
+            const originalTbody = document.querySelector('{tbodySelector}');
+
+            if (!originalThead || !originalTbody) {{
+                throw new Error('Thead or Tbody not found: {theadSelector}, {tbodySelector}');
+            }}
+
+            // Create Bootstrap Table
+            shadowRoot.innerHTML = `
+                <style>
+                    .bootstrap-table {{
+                        display: block;
+                        width: 100%;
+                        max-height: 400px; /* Adjustable height */
+                        overflow: auto;
+                        border: 1px solid #dee2e6;
+                        font-family: Arial, sans-serif;
+                        font-size: 14px;
+                        color: #333;
+                    }}
+                    table {{
+                        width: 100%;
+                        border-collapse: collapse;
+                        text-align: left;
+                    }}
+                    thead {{
+                        position: sticky;
+                        top: 0;
+                        background-color: #f8f9fa;
+                        font-weight: bold;
+                        z-index: 1;
+                    }}
+                    th, td {{
+                        padding: 8px;
+                        border: 1px solid #dee2e6;
+                    }}
+                    tbody tr:nth-child(even) {{
+                        background-color: #f2f2f2;
+                    }}
+                </style>
+                <div class="bootstrap-table">
+                    <table>
+                        <thead>${{originalThead.innerHTML}}</thead>
+                        <tbody>${{originalTbody.innerHTML}}</tbody>
+                    </table>
+                </div>
+            `;
+        }})();
+    ";
+
+    // Execute the JavaScript in the browser
+    ((IJavaScriptExecutor)driver).ExecuteScript(script);
+}
