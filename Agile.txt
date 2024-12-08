@@ -438,3 +438,48 @@ public void CreateShadowBootstrapTable(IWebDriver driver, string parentDivSelect
     // Execute the JavaScript in the browser
     ((IJavaScriptExecutor)driver).ExecuteScript(script);
 }
+
+
+
+
+
+
+function convertTableToSimpleFormat() {
+  const sourceTable = document.getElementById("sourceTable");
+  const rows = sourceTable.getElementsByTagName("tr");
+  const resultContainer = document.getElementById("resultContainer");
+
+  // Create a new table for the simplified version
+  const simpleTable = document.createElement("table");
+  simpleTable.border = "1";
+
+  for (let i = 0; i < rows.length; i++) {
+    const newRow = document.createElement("tr");
+    const cells = rows[i].getElementsByTagName("td");
+
+    for (let j = 0; j < cells.length; j++) {
+      const cell = cells[j];
+      const newCell = document.createElement("td");
+
+      // Extract data based on child element type
+      if (cell.querySelector("a")) {
+        newCell.textContent = cell.querySelector("a").textContent;
+      } else if (cell.querySelector("img")) {
+        newCell.textContent = cell.querySelector("img").alt;
+      } else {
+        newCell.textContent = cell.textContent.trim();
+      }
+
+      newRow.appendChild(newCell);
+    }
+
+    simpleTable.appendChild(newRow);
+  }
+
+  // Clear the container and append the new table
+  resultContainer.innerHTML = "";
+  resultContainer.appendChild(simpleTable);
+}
+
+// Call the function
+convertTableToSimpleFormat();
