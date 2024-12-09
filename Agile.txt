@@ -483,3 +483,35 @@ function convertTableToSimpleFormat() {
 
 // Call the function
 convertTableToSimpleFormat();
+
+
+
+ private string LocateValueNearElement(IWebElement fieldElement)
+    {
+        // Check immediate siblings
+        try
+        {
+            var siblingValue = fieldElement.FindElement(By.XPath("following-sibling::*"));
+            return ExtractValue(siblingValue);
+        }
+        catch (NoSuchElementException) { }
+
+        // Check children (nested elements)
+        try
+        {
+            var childValue = fieldElement.FindElement(By.XPath(".//*"));
+            return ExtractValue(childValue);
+        }
+        catch (NoSuchElementException) { }
+
+        // Check parent and its siblings
+        try
+        {
+            var parent = fieldElement.FindElement(By.XPath(".."));
+            var parentSiblingValue = parent.FindElement(By.XPath("following-sibling::*"));
+            return ExtractValue(parentSiblingValue);
+        }
+        catch (NoSuchElementException) { }
+
+        return "Value not found";
+    }
