@@ -1,0 +1,72 @@
+using System;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Azure OpenAI configuration
+        string apiKey = "your_azure_openai_api_key";
+        string endpoint = "https://your_openai_endpoint.openai.azure.com/";
+        string deploymentName = "your_model_name"; // e.g., "text-davinci-003"
+
+        // Initialize Selenium WebDriver
+        IWebDriver driver = new ChromeDriver();
+        try
+        {
+            // Navigate to a website
+            driver.Navigate().GoToUrl("https://example.com");
+
+            // Extract data using Selenium
+            var element = driver.FindElement(By.CssSelector("h1"));
+            string scrapedData = element.Text;
+            Console.WriteLine("Scraped Data: " + scrapedData);
+
+            // Send scraped data to Azure OpenAI
+            string openAiResponse = await CallOpenAiAsync(apiKey, endpoint, deploymentName, scrapedData);
+            Console.WriteLine("OpenAI Response: " + openAiResponse);
+        }
+        finally
+        {
+            // Close the browser
+            driver.Quit();
+        }
+    }
+
+    // Method to call Azure OpenAI
+    static async Task<string> CallOpenAiAsync(string apiKey, string endpoint, string deploymentName, string inputText)
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            // Set headers
+            client.DefaultRequestHeaders.Add("api-key", apiKey);
+
+            // Create request body
+            var requestBody = new
+            {
+                prompt = $"Analyze this data: {inputText}",
+                max_tokens = 100,
+                temperature = 0.7
+            };
+
+            string jsonBody = JsonConvert.SerializeObject(requestBody);
+
+            // Send POST request to Azure OpenAI
+            HttpResponseMessage response = await client.PostAsync(
+                $"{endpoint}/openai/deployments/{deploymentName}/completions?api-version=2023-03-15-preview",
+                new StringContent(jsonBody, Encoding.UTF8, "application/json")
+            );
+
+            // Parse response
+            response.EnsureSuccessStatusCode();
+            string responseContent = await response.Content.ReadAsStringAsync();
+            dynamic jsonResponse = JsonConvert.DeserializeObject(responseContent);
+            return jsonResponse.choices[0].text.ToString();
+        }
+    }
+}
