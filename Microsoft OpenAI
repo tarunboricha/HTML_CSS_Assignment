@@ -70,3 +70,24 @@ class Program
         }
     }
 }
+
+
+Prompt:
+You are an AI assistant tasked with extracting individual names from a list of trust names. Trust names may contain multiple individual names, which can appear in various formats. Your goal is to identify and return a list of individual names with proper formatting (First Name, Middle Name, Last Name). Ignore words like "Estate," "Trust," and conjunctions such as "and."
+
+Examples:
+
+Input: "Estate of John Smith, Paul Pearce and Jannifer Pearce, Family Living Trust"
+Output: ["John Smith", "Paul Pearce", "Jannifer Pearce"]
+
+Input: "Revocable Trust of Mark Johnson and Jennifer Johnson"
+Output: ["Mark Johnson", "Jennifer Johnson"]
+
+Input: "The Sarah Connor Irrevocable Trust"
+Output: ["Sarah Connor"]
+
+Input: "Estate of Michael Thompson"
+Output: ["Michael Thompson"]
+
+Task:
+Extract and return individual names from the following trust name: "{Your Input Here}"
